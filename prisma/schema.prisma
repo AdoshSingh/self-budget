@@ -29,8 +29,9 @@ model Account {
   want              Float
   investment        Float
   secondary_balance Float
+  penalty           Float         @default(0)
   user              User          @relation(fields: [userId], references: [id])
-  userId            String
+  userId            String        @unique
   Fund              Fund[]
   Transaction       Transaction[]
 }
@@ -43,19 +44,26 @@ model Fund {
   duration    Int
   paused      Boolean @default(false)
   account     Account @relation(fields: [accountId], references: [id])
-  accountId   String
+  accountId   String  @unique
 }
 
 enum TransactionType {
   CREDIT
   DEBIT
+  TRANSFER
 }
 
 enum BracketType {
+  INCOME
+  UNREGULATED
   NEED
   WANT
   INVEST
-  SAVINGS
+  FUND_DEBIT
+  SURPLUS
+  FUND_TRANSFER
+  INTERNAL
+  PENALTY
 }
 
 model Transaction {
@@ -64,6 +72,8 @@ model Transaction {
   date      DateTime
   payee     String
   bracket   BracketType
+  payer     String
+  amount    Float
   account   Account         @relation(fields: [accountId], references: [id])
-  accountId String
+  accountId String          @unique
 }
