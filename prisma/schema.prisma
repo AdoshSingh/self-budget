@@ -42,9 +42,10 @@ model Fund {
   target      Float
   installment Float
   duration    Int
+  balance     Float   @default(0)
   paused      Boolean @default(false)
   account     Account @relation(fields: [accountId], references: [id])
-  accountId   String  @unique
+  accountId   String
 }
 
 enum TransactionType {
@@ -54,6 +55,7 @@ enum TransactionType {
 }
 
 enum BracketType {
+  REFUND
   INCOME
   UNREGULATED
   NEED

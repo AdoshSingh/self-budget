@@ -42,7 +42,8 @@ class TransactionRepository {
     bracket: BracketType,
     payer: string,
     amount: number,
-    accountId: string
+    accountId: string,
+    fundId?: string
   ) {
     const inputTransaction = {
       type,
@@ -54,7 +55,7 @@ class TransactionRepository {
       accountId,
     };
     const { remaining, updated } = await accountRepository.updateAccount(
-      inputTransaction
+      inputTransaction, fundId
     );
     if (remaining != 0) return remaining;
     return await this.dbClient.transaction.create({

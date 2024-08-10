@@ -1,6 +1,7 @@
 import prisma from "../prismaClient";
 import type { Account, Transaction } from "@/domain/prismaTypes";
-import { transactionRepository } from "./transactionRepository";
+import { ReturnUpdatedAccount } from "@/domain/returnTypes";
+import { fundRepository } from "./fundRepository";
 
 class AccountRepository {
   private static instance: AccountRepository;
@@ -48,8 +49,9 @@ class AccountRepository {
 
   private async creditAccount(
     transaction: Partial<Transaction>,
-    account: Account
-  ) {
+    account: Account,
+    fundId?: string
+  ): Promise<ReturnUpdatedAccount> {
     const newPrice = transaction.amount;
     if (!newPrice) return { remaining: 0, updated: null };
     const newNeed = (newPrice * 50) / 100;
@@ -88,6 +90,83 @@ class AccountRepository {
           updated: updated2,
         };
 
+      case "REFUND":
+        switch (transaction.payee) {
+          case "NEED":
+            const updated3 = await this.dbClient.account.update({
+              where: {
+                id: account.id,
+              },
+              data: {
+                primary_balance: account.primary_balance + newPrice,
+                need: account.need + newPrice,
+              },
+            });
+            return {
+              remaining: 0,
+              updated: updated3,
+            };
+
+          case "WANT":
+            const updated4 = await this.dbClient.account.update({
+              where: {
+                id: account.id,
+              },
+              data: {
+                primary_balance: account.primary_balance + newPrice,
+                want: account.want + newPrice,
+              },
+            });
+            return {
+              remaining: 0,
+              updated: updated4,
+            };
+
+          case "INVEST":
+            const updated5 = await this.dbClient.account.update({
+              where: {
+                id: account.id,
+              },
+              data: {
+                primary_balance: account.primary_balance + newPrice,
+                investment: account.investment + newPrice,
+              },
+            });
+            return {
+              remaining: 0,
+              updated: updated5,
+            };
+
+          case "SECONDARY":
+            const updated6 = await this.dbClient.account.update({
+              where: {
+                id: account.id,
+              },
+              data: {
+                secondary_balance: account.secondary_balance + newPrice,
+              },
+            });
+            return {
+              remaining: 0,
+              updated: updated6,
+            };
+
+          case "FUNDS":
+            if (!fundId)
+              return {
+                remaining: 0,
+                updated: null,
+              };
+            const updated7 = await fundRepository.addMoneyInFunds(
+              fundId,
+              newPrice
+            );
+            return {
+              remaining: 0,
+              updated: account,
+            };
+        }
+
       default:
         return {
           remaining: 0,
@@ -98,8 +177,9 @@ class AccountRepository {
 
   private async debitAccount(
     transaction: Partial<Transaction>,
-    account: Account
-  ) {
+    account: Account,
+    fundId?: string
+  ): Promise<ReturnUpdatedAccount> {
     const amount = transaction.amount;
     if (!amount)
       return {
@@ -163,10 +243,19 @@ class AccountRepository {
         };
 
       case "FUND_DEBIT":
-        //return await fundRepository.debitFund()
+        if (!fundId)
+          return {
+            remaining: 0,
+            updated: null,
+          };
+
+        const udpatedFund = await fundRepository.removeMoneyFromFunds(
+          fundId,
+          amount
+        );
         return {
           remaining: 0,
-          updated: null,
+          updated: account,
         };
 
       default:
@@ -179,13 +268,15 @@ class AccountRepository {
 
   private async transferAccount(
     transaction: Partial<Transaction>,
-    account: Account
-  ) {
+    account: Account,
+    fundId?: string
+  ): Promise<ReturnUpdatedAccount> {
     const amount = transaction.amount;
-    if (!amount) return {
-      remaining: 0,
-      updated: null
-    };
+    if (!amount)
+      return {
+        remaining: 0,
+        updated: null,
+      };
     let existingNeed = account.need;
     let existingWant = account.want;
     let existingSecondary = account.secondary_balance;
@@ -209,10 +300,48 @@ class AccountRepository {
         };
 
       case "FUND_TRANSFER":
-        // return fundRepository.fundTransfer()
+        if (!fundId)
+          return {
+            remaining: 0,
+            updated: null,
+          };
+        let updated2;
+        if (transaction.payer === "NEED") {
+          updated2 = await this.dbClient.account.update({
+            where: {
+              id: account.id,
+            },
+            data: {
+              primary_balance: {
+                decrement: amount,
+              },
+              need: {
+                decrement: amount,
+              },
+            },
+          });
+        } else {
+          updated2 = await this.dbClient.account.update({
+            where: {
+              id: account.id,
+            },
+            data: {
+              primary_balance: {
+                decrement: amount,
+              },
+              want: {
+                decrement: amount,
+              },
+            },
+          });
+        }
+        const updatedFund = await fundRepository.addMoneyInFunds(
+          fundId,
+          amount
+        );
         return {
           remaining: 0,
-          updated: null,
+          updated: updated2,
         };
 
       case "INTERNAL":
@@ -245,12 +374,61 @@ class AccountRepository {
               remaining: amount - existingWant,
               updated: updated2,
             };
-          } else if (existingWant === 0 /*&& fundRepo.getFunds > 0*/) {
-            // fund transfer internal
-            return {
-              remaining: 0,
-              updated: null,
-            };
+          } else if (existingWant === 0 && fundId) {
+            const existingFund = await fundRepository.getFund(fundId);
+            if (!existingFund)
+              return {
+                remaining: 0,
+                updated: null,
+              };
+
+            const existingFundBalance = existingFund.balance;
+            let updatedFund;
+            if (existingFundBalance >= amount) {
+              updatedFund = await fundRepository.removeMoneyFromFunds(
+                fundId,
+                amount
+              );
+              const updatedAcc = await this.dbClient.account.update({
+                where: {
+                  id: account.id,
+                },
+                data: {
+                  primary_balance: {
+                    increment: amount,
+                  },
+                  need: {
+                    increment: amount,
+                  },
+                },
+              });
+              return {
+                remaining: 0,
+                updated: updatedAcc,
+              };
+            } else {
+              updatedFund = await fundRepository.removeMoneyFromFunds(
+                fundId,
+                existingFundBalance
+              );
+              const updatedAcc = await this.dbClient.account.update({
+                where: {
+                  id: account.id,
+                },
+                data: {
+                  primary_balance: {
+                    increment: existingFundBalance,
+                  },
+                  need: {
+                    increment: existingFundBalance,
+                  },
+                },
+              });
+              return {
+                remaining: amount - existingFundBalance,
+                updated: updatedAcc,
+              };
+            }
           } else {
             const updated2 = await this.dbClient.account.update({
               where: {
@@ -268,25 +446,78 @@ class AccountRepository {
             };
           }
         } else if (transaction.payee === "WANT") {
-          // if(fundRepository.getFunds > 0) {
-          //   // fund transfer internal
-          // } else {
-          //   const updated2 = await this.dbClient.account.update({
-          //     where: {
-          //       id: account.id
-          //     },
-          //     data: {
-          //       primary_balance: account.primary_balance + amount
-          //       need: existingNeed + amount,
-          //       secondary_balance: existingSecondary - amount,
-          //       penalty: account.penalty + amount
-          //     }
-          //   });
-          //   return {
-          //     remaining: 0,
-          //     updated: updated2
-          //   }
-          // }
+          if (fundId) {
+            const existingFund = await fundRepository.getFund(fundId);
+            if (!existingFund)
+              return {
+                remaining: 0,
+                updated: null,
+              };
+
+            const existingFundBalance = existingFund.balance;
+            let updatedFund;
+            if (existingFundBalance >= amount) {
+              updatedFund = await fundRepository.removeMoneyFromFunds(
+                fundId,
+                amount
+              );
+              const updatedAcc = await this.dbClient.account.update({
+                where: {
+                  id: account.id,
+                },
+                data: {
+                  primary_balance: {
+                    increment: amount,
+                  },
+                  want: {
+                    increment: amount,
+                  },
+                },
+              });
+              return {
+                remaining: 0,
+                updated: updatedAcc,
+              };
+            } else {
+              updatedFund = await fundRepository.removeMoneyFromFunds(
+                fundId,
+                existingFundBalance
+              );
+              const updatedAcc = await this.dbClient.account.update({
+                where: {
+                  id: account.id,
+                },
+                data: {
+                  primary_balance: {
+                    increment: existingFundBalance,
+                  },
+                  want: {
+                    increment: existingFundBalance,
+                  },
+                },
+              });
+              return {
+                remaining: amount - existingFundBalance,
+                updated: updatedAcc,
+              };
+            }
+          } else {
+            const updated2 = await this.dbClient.account.update({
+              where: {
+                id: account.id,
+              },
+              data: {
+                primary_balance: account.primary_balance + amount,
+                want: existingWant + amount,
+                secondary_balance: existingSecondary - amount,
+                penalty: account.penalty + amount,
+              },
+            });
+            return {
+              remaining: 0,
+              updated: updated2,
+            };
+          }
 
           return {
             remaining: 0,
@@ -317,7 +548,10 @@ class AccountRepository {
     }
   }
 
-  public async updateAccount(transaction: Partial<Transaction>) {
+  public async updateAccount(
+    transaction: Partial<Transaction>,
+    fundId?: string
+  ): Promise<ReturnUpdatedAccount> {
     const existingAccount = await this.dbClient.account.findUnique({
       where: {
         id: transaction.accountId,
@@ -332,11 +566,11 @@ class AccountRepository {
 
     switch (transaction.type) {
       case "CREDIT":
-        return await this.creditAccount(transaction, existingAccount);
+        return await this.creditAccount(transaction, existingAccount, fundId);
       case "DEBIT":
-        return await this.debitAccount(transaction, existingAccount);
+        return await this.debitAccount(transaction, existingAccount, fundId);
       case "TRANSFER":
-        return await this.transferAccount(transaction, existingAccount);
+        return await this.transferAccount(transaction, existingAccount, fundId);
 
       default:
         return {
