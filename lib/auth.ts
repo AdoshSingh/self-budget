@@ -12,6 +12,12 @@ export const authOptions: AuthOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
     async signIn({ user, account, profile }) {
       const dbUser = await userService.addUser(
         user.id,

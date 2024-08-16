@@ -1,14 +1,9 @@
-"use client";
-import { signIn } from "next-auth/react";
+import SigninForm from "@/components/SigninForm";
 
 export default function SignInPage() {
   return (
     <div>
-      <div>
-        <button onClick={() => signIn("google", { callbackUrl: "/" })}>
-          Sign in with Google
-        </button>
-      </div>
+      <SigninForm></SigninForm>
     </div>
   );
 }
