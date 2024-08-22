@@ -1,36 +1,35 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import accountService from "@/services/accountService";
-import { AddAccount } from "./AddAccount";
+"use client";
 
-export default async function InfoContainer() {
-  const session = await getServerSession(authOptions);
-  let accounts;
-  if (session?.user.id) {
-    accounts = await accountService.getAccount(session.user.id);
-    console.log(accounts);
+import { getSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import NoAccountPlaceholder from "./NoAccountPlaceholder";
+import AccountContainer from "./AccountContainer";
+import { useAppStore } from "@/store/store";
+
+export default function InfoContainer() {
+  const router = useRouter();
+
+  const { account, setAccount, session, setSession } = useAppStore();
+
+  useEffect(() => {
+    getSession().then((sesh) => {
+      if (!sesh) {
+        router.push("/auth/signin");
+        return;
+      }
+      setSession(sesh)
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    setAccount(session.user.id);
+  }, [session]);
+
+  if (!account) {
+    return <NoAccountPlaceholder userId={session?.user.id} />;
+  } else {
+    return <AccountContainer/>;
   }
-
-  if (!accounts) {
-    return (
-      <div>
-        <h1>No account yet. Please add one</h1>
-        <AddAccount />
-      </div>
-    );
-  }
-
-  return (
-    <div className="">
-      <div>
-        {session && session.user ? (
-          <div>{session.user.id}</div>
-        ) : (
-          <a className="btn btn-primary" href="/api/auth/signin">
-            Sign in
-          </a>
-        )}
-      </div>
-    </div>
-  );
 }

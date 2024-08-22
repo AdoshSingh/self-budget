@@ -1,4 +1,3 @@
-import { User } from "@prisma/client";
 import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import userService from "@/services/userService";
