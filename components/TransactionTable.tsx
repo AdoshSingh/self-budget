@@ -37,6 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { convertToCurrency } from "@/utils/formatNumber";
+import { AddTransaction } from "./AddTransaction";
 
 export function DataTableDemo({
   transactions,
@@ -126,7 +127,7 @@ export function DataTableDemo({
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex items-center py-4 gap-4">
         <Input
           placeholder="Filter Payee..."
           value={(table.getColumn("payee")?.getFilterValue() as string) ?? ""}
@@ -135,6 +136,7 @@ export function DataTableDemo({
           }
           className="max-w-sm"
         />
+        <AddTransaction />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -205,7 +207,7 @@ export function DataTableDemo({
                   colSpan={_columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No transactions.
                 </TableCell>
               </TableRow>
             )}

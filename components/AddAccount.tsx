@@ -27,14 +27,18 @@ import { Label } from "@/components/ui/label";
 import { IndianRupee } from "lucide-react";
 import { DialogBox } from "./DialogBox";
 import { accountApiService } from "@/services/apiService";
+import { useAppStore } from "@/store/store";
 
 export function AddAccount({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
+  const {setAccount} = useAppStore();
+  
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const formSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newAccount = await accountApiService.addAccount(userId);
+    setAccount(userId);
     console.log(newAccount);
     setOpen(false);
   };

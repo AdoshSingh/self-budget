@@ -3,12 +3,12 @@ import { Account } from "@/domain/prismaTypes";
 import { accountApiService } from "@/services/apiService";
 
 export interface AccountSlice {
-  account: Account | null;
+  account: Account | null | undefined;
   setAccount: (userId: string) => void;
 }
 
 export const createAccountSlice: StateCreator<AccountSlice> = (set) => ({
-  account: null,
+  account: undefined,
   setAccount: async (userId: string) => {
     const existingAccount = await accountApiService.getAccount(userId);
     set({ account: existingAccount });

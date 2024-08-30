@@ -19,6 +19,7 @@ class AccountApiService {
 
   public async getAccount(userId: string) {
     const existingAccount = await axios.get(`/api/account?userid=${userId}`);
+    console.log(existingAccount.data.data);
     return existingAccount.data.data;
   }
 }

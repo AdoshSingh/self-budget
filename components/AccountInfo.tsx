@@ -12,10 +12,7 @@ const AccountInfo = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <span className="text-2xl">Your Balances</span>{" "}
-        <span>
-          <AddTransaction />
-        </span>
+        <span className="text-2xl">Your Balances</span>
       </div>
       <div className="space-y-2">
         <div className="flex justify-between">
