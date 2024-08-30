@@ -73,6 +73,7 @@ export function AddTransaction() {
             });
             return;
           }
+          break;
         case 'WANT': 
           if(args.amount > account.want) {
             toast({
@@ -82,6 +83,7 @@ export function AddTransaction() {
             });
             return;
           }
+          break;
         case 'INVEST': 
           if(args.amount > account.investment) {
             toast({
@@ -91,6 +93,7 @@ export function AddTransaction() {
             });
             return;
           }
+          break;
       }
     }
       
