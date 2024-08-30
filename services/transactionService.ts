@@ -22,7 +22,7 @@ class TransactionService {
 
   public async addTransaction(
     type: TransactionType,
-    date: any,
+    date: Date,
     payee: string,
     bracket: BracketType,
     payer: string,

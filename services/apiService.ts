@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { TransactionType, BracketType } from "@/domain/prismaTypes";
+import type { TransactionRequest } from "@/domain/requestTypes";
 
 class AccountApiService {
   private static instance: AccountApiService;
@@ -47,24 +48,18 @@ class TransactionApiService {
   }
 
   public async addTransaction(
-    type: TransactionType,
-    date: any,
-    payee: string,
-    bracket: BracketType,
-    payer: string,
-    amount: number,
-    accountId: string,
-    fundId?: string
+    args: TransactionRequest
   ) {
-    const newTransaction = await axios.post(`/api/transaction`, {
-      type,
-      date,
-      payee,
-      bracket,
-      payer,
-      amount,
-      accountId,
-      fundId,
+    
+    const newTransaction = await axios.put(`/api/transaction`, {
+      type: args.type,
+      date: args.date,
+      payee: args.payee,
+      bracket: args.bracket,
+      payer: args.payer,
+      amount: args.amount,
+      accountId: args.accountId,
+      fundId: args.fundId,
     });
     return newTransaction.data.data;
   }

@@ -20,7 +20,17 @@ export function DatePickerDemo({
   date: Date | undefined;
   setDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
 }) {
-  // const [date, setDate] = React.useState<Date>();
+  
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      const currentDate = new Date();
+      selectedDate.setHours(currentDate.getHours());
+      selectedDate.setMinutes(currentDate.getMinutes());
+      selectedDate.setSeconds(currentDate.getSeconds());
+      selectedDate.setMilliseconds(currentDate.getMilliseconds());
+    }
+    setDate(selectedDate);
+  };
 
   return (
     <Popover>
@@ -40,8 +50,12 @@ export function DatePickerDemo({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={setDate}
+          onSelect={handleDateSelect}
           initialFocus
+          disabled={(date) =>
+            date > new Date() || date < new Date("1900-01-01")
+          }
+          toMonth={new Date()}
         />
       </PopoverContent>
     </Popover>

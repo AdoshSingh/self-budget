@@ -1,9 +1,11 @@
-import React from 'react'
-
-const Transactions = () => {
+import type { Transaction } from "@/domain/prismaTypes";
+import { DataTableDemo } from "./TransactionTable";
+const Transactions = ({ transactions }: { transactions: Transaction[] }) => {
   return (
-    <div>Transactions</div>
-  )
-}
+    <div className="p-6">
+      <DataTableDemo transactions={transactions}/>
+    </div>
+  );
+};
 
-export default Transactions
+export default Transactions;

@@ -16,3 +16,29 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json({ status: 200, data: transaction });
   }
 };
+
+export const PUT = async (req: NextRequest) => {
+  const {
+    type,
+    date,
+    payee,
+    bracket,
+    payer,
+    amount,
+    accountId,
+    fundId 
+  } = await req.json();
+
+  const resp = await transactionService.addTransaction(
+    type,
+    date,
+    payee,
+    bracket,
+    payer,
+    amount,
+    accountId,
+    fundId
+  );
+
+  return NextResponse.json({status: 201, data: resp});
+};

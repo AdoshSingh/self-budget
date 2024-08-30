@@ -16,7 +16,10 @@ export const createTransactionSlice: StateCreator<TransactionSlice> = (
     const existingTransactions = await transactionApiService.getTransactions(
       accountId
     );
-    set({ transactions: existingTransactions });
+    const sortedDates = existingTransactions.sort(
+      (a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    set({ transactions: sortedDates });
   },
   addTransaction: async (transaction: Transaction) => {
     set((state) => ({ transactions: [...state.transactions, transaction] }));
