@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "./ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -57,46 +58,49 @@ export function AddTransaction() {
       toast({
         variant: "destructive",
         title: "Invalid inputs",
-        description: "Please fill all the inputs before adding a transaction"
+        description: "Please fill all the inputs before adding a transaction",
       });
       return;
     }
 
-    if(args.type === 'DEBIT') {
-      switch(args.bracket) {
-        case 'NEED':
-          if(args.amount > account.need) {
+    if (args.type === "DEBIT") {
+      switch (args.bracket) {
+        case "NEED":
+          if (args.amount > account.need) {
             toast({
               variant: "destructive",
               title: "Insufficient balance",
-              description: "Your needs dont have enough amount please make a transfer first."
+              description:
+                "Your needs dont have enough amount please make a transfer first.",
             });
             return;
           }
           break;
-        case 'WANT': 
-          if(args.amount > account.want) {
+        case "WANT":
+          if (args.amount > account.want) {
             toast({
               variant: "destructive",
               title: "Insufficient balance",
-              description: "Your wants dont have enough amount please make a transfer first."
+              description:
+                "Your wants dont have enough amount please make a transfer first.",
             });
             return;
           }
           break;
-        case 'INVEST': 
-          if(args.amount > account.investment) {
+        case "INVEST":
+          if (args.amount > account.investment) {
             toast({
               variant: "destructive",
               title: "Insufficient balance",
-              description: "Your investment dont have enough amount please make a transfer first."
+              description:
+                "Your investment dont have enough amount please make a transfer first.",
             });
             return;
           }
           break;
       }
     }
-      
+
     const resp = await transactionApiService.addTransaction({
       ...args,
       accountId: account.id,
@@ -109,23 +113,21 @@ export function AddTransaction() {
 
   const formContainerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (formContainerRef.current) {
-        formContainerRef.current.style.setProperty('bottom', `env(safe-area-inset-bottom)`);
-      }
-    };
+  const [viewportHeight, setViewportHeight] = useState(
+    window.visualViewport?.height
+  );
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", handleResize);
-      handleResize(); // Initial call in case the keyboard is already open
+  useEffect(() => {
+    function updateViewportHeight() {
+      setViewportHeight(window.visualViewport?.height || 0);
     }
 
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", handleResize);
-      }
-    };
+    window.visualViewport?.addEventListener("resize", updateViewportHeight);
+    return () =>
+      window.visualViewport?.removeEventListener(
+        "resize",
+        updateViewportHeight
+      );
   }, []);
 
   if (isDesktop) {
@@ -161,38 +163,44 @@ export function AddTransaction() {
   }
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <Button variant="outline">Add Transaction</Button>
-      </DrawerTrigger>
-      <DrawerContent ref={formContainerRef}>
-        <DrawerHeader className="text-left">
-          <DrawerTitle>Add Transaction</DrawerTitle>
-          <DrawerDescription>Add your transactions here.</DrawerDescription>
-        </DrawerHeader>
-        <Tabs defaultValue="transaction" className="mx-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="transaction">Transaction</TabsTrigger>
-            <TabsTrigger value="transfer">Transfer</TabsTrigger>
-          </TabsList>
-          <TabsContent value="transaction">
-            <Card className="p-4">
-              <ProfileForm formSubmit={addTransaction} />
-            </Card>
-          </TabsContent>
-          <TabsContent value="transfer">
-            <Card className="p-4">
-              <ProfileForm formSubmit={addTransaction} />
-            </Card>
-          </TabsContent>
-        </Tabs>
-        <DrawerFooter className="pt-2">
-          <DrawerClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+    <ScrollArea
+      style={{
+        height: `${window.innerHeight > (viewportHeight || 0) ? 20 : 100}%`,
+      }}
+    >
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger asChild>
+          <Button variant="outline">Add Transaction</Button>
+        </DrawerTrigger>
+        <DrawerContent ref={formContainerRef}>
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Add Transaction</DrawerTitle>
+            <DrawerDescription>Add your transactions here.</DrawerDescription>
+          </DrawerHeader>
+          <Tabs defaultValue="transaction" className="mx-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="transaction">Transaction</TabsTrigger>
+              <TabsTrigger value="transfer">Transfer</TabsTrigger>
+            </TabsList>
+            <TabsContent value="transaction">
+              <Card className="p-4">
+                <ProfileForm formSubmit={addTransaction} />
+              </Card>
+            </TabsContent>
+            <TabsContent value="transfer">
+              <Card className="p-4">
+                <ProfileForm formSubmit={addTransaction} />
+              </Card>
+            </TabsContent>
+          </Tabs>
+          <DrawerFooter className="pt-2">
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </ScrollArea>
   );
 }
 
