@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
@@ -107,6 +107,27 @@ export function AddTransaction() {
     toast({ description: "Transaction added successfully" });
   };
 
+  const formContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (formContainerRef.current) {
+        formContainerRef.current.style.setProperty('bottom', `env(safe-area-inset-bottom)`);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleResize);
+      handleResize(); // Initial call in case the keyboard is already open
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleResize);
+      }
+    };
+  }, []);
+
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
@@ -144,7 +165,7 @@ export function AddTransaction() {
       <DrawerTrigger asChild>
         <Button variant="outline">Add Transaction</Button>
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent ref={formContainerRef}>
         <DrawerHeader className="text-left">
           <DrawerTitle>Add Transaction</DrawerTitle>
           <DrawerDescription>Add your transactions here.</DrawerDescription>
