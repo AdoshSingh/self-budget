@@ -10,3 +10,11 @@ export interface TransactionRequest {
   accountId: string | "";
   fundId?: string;
 }
+
+export interface FundRequest {
+  title: string;
+  target: number;
+  installment: number;
+  duration: number;
+  accountId: string
+}

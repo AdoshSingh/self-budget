@@ -189,7 +189,7 @@ function ProfileForm({ className, formSubmit }: ProfileFormProps) {
   const [payer, setPayer] = useState<TransactionRequest["payer"]>("");
   const [bracket, setBracket] = useState<TransactionRequest["bracket"]>("");
   const [amount, setAmount] = useState<TransactionRequest["amount"]>(0);
-
+  
   useEffect(() => {
     switch (bracket) {
       case "INCOME":
@@ -282,6 +282,7 @@ function ProfileForm({ className, formSubmit }: ProfileFormProps) {
               id="amount"
               placeholder="Enter amount"
               type="number"
+              step="any"
               onChange={(e) => setAmount(Number(e.target.value))}
             />
           </div>
