@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { TransactionType, BracketType } from "@/domain/prismaTypes";
-import type { TransactionRequest } from "@/domain/requestTypes";
+import type { FundRequest, TransactionRequest } from "@/domain/requestTypes";
 
 class AccountApiService {
   private static instance: AccountApiService;
@@ -66,7 +66,37 @@ class TransactionApiService {
   }
 }
 
+class FundApiService {
+  private static instance: FundApiService;
+  private constructor() {}
+
+  public static getInstance() {
+    if(!FundApiService.instance) {
+      FundApiService.instance = new FundApiService();
+    }
+    return FundApiService.instance;
+  }
+
+  public async getAllFunds(accountId: string)  {
+    const existingFunds = await axios.get(`/api/fund?accoundid=${accountId}`);
+    return existingFunds.data.data;
+  }
+
+  public async createFund(args: FundRequest) {
+    const newFund = await axios.put(`/api/fund`, {
+      title: args.title,
+      target: args.target,
+      installment: args.installment,
+      duration: args.duration,
+      accountId: args.accountId
+    });
+    return newFund.data.data;
+  }
+  
+}
+
 const accountApiService = AccountApiService.getInstance();
 const transactionApiService = TransactionApiService.getInstance();
+const fundApiService = FundApiService.getInstance();
 
-export { accountApiService, transactionApiService };
+export { accountApiService, transactionApiService, fundApiService };

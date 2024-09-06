@@ -4,7 +4,7 @@ import TransactionContainer from "./TransactionContainer";
 
 const AccountContainer = () => {
   return (
-    <div>
+    <div className="flex-1 h-full overflow-auto">
       <AccountInfo />
       <TransactionContainer />
     </div>

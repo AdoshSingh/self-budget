@@ -39,4 +39,5 @@ class FundService {
   }
 }
 
-export const fundService = FundService.getInstance();
+const fundService = FundService.getInstance();
+export default fundService;

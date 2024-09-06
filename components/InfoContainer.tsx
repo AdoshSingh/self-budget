@@ -21,7 +21,7 @@ export default function InfoContainer({
 
   if (account === undefined) {
     return (
-      <div>
+      <div className="flex-1">
         <AccountSkeleton />
         <TransactionSkeleton/>
       </div>

@@ -4,6 +4,8 @@ import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
+import Navbar from "@/components/Topbar";
+import Sidebar from "@/components/Sidebar";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -29,7 +31,13 @@ export default function RootLayout({
         )}
       >
         <SessionWrapper>
-          {children}
+          <div className="flex flex-col">
+            <Navbar />
+            <div className="flex h-[90vh]">
+              <Sidebar />
+              {children}
+            </div>
+          </div>
           <Toaster />
         </SessionWrapper>
       </body>

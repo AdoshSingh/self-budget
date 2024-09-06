@@ -1,4 +1,5 @@
 export const trasactionTypesOptions = ["CREDIT", "DEBIT", "TRANSFER"];
+
 export const bracketTypeOptions = [
   "REFUND",
   "INCOME",
@@ -18,3 +19,18 @@ export const transactionOptions = {
   DEBIT: ["NEED", "WANT", "INVEST", "FUND_DEBIT"],
   TRANSFER: ["SURPLUS", "FUND_TRANSFER", "INTERNAL", "PENALTY"],
 };
+
+import { HomeIcon, DollarSign } from "lucide-react";
+
+export const sidebarElements = [
+  {
+    route: '/',
+    key: 'home',
+    icon: HomeIcon
+  },
+  {
+    route: '/funds',
+    key: 'funds',
+    icon: DollarSign
+  },
+];
