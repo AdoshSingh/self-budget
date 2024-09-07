@@ -88,7 +88,11 @@ export function DataTableDemo({
         return (
           <div
             className={`text-right ${
-              type === "CREDIT" ? "text-green-500" : "text-red-500"
+              type === "CREDIT"
+                ? "text-green-500"
+                : type === "DEBIT"
+                ? "text-red-500"
+                : "text-black"
             }`}
           >
             {formatted}
