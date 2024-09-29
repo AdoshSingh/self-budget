@@ -12,7 +12,9 @@ export const createFundSlice: StateCreator<FundSlice> = (set) => ({
   setFunds: async (accountId: string | null, allFunds: Fund[] | null) => {
     if (allFunds) {
       set({ funds: allFunds });
+      return;
     } else if (accountId) {
+      console.log("coming here", accountId);
       const existingFunds = await fundApiService.getAllFunds(accountId);
       set({ funds: existingFunds });
     }

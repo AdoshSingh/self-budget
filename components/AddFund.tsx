@@ -21,7 +21,7 @@ import { fundApiService } from "@/services/apiService";
 
 export function AddFund() {
   const { toast } = useToast();
-  const { account } = useAppStore();
+  const { account, setFunds } = useAppStore();
   const [open, setOpen] = useState(false);
 
   const addFund = async (
@@ -49,6 +49,7 @@ export function AddFund() {
       accountId: account.id
     });
     console.log(resp);
+    setFunds(account.id , null);
     setOpen(false);
     toast({ description: "Fund created successfully" });
   };

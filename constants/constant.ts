@@ -20,7 +20,7 @@ export const transactionOptions = {
   TRANSFER: ["SURPLUS", "FUND_TRANSFER", "INTERNAL", "PENALTY"],
 };
 
-import { HomeIcon, DollarSign } from "lucide-react";
+import { HomeIcon, DollarSign, BarChart2 } from "lucide-react";
 
 export const sidebarElements = [
   {
@@ -33,4 +33,9 @@ export const sidebarElements = [
     key: 'funds',
     icon: DollarSign
   },
+  {
+    route: '/analytics',
+    key: 'analytics',
+    icon: BarChart2
+  }
 ];

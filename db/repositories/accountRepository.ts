@@ -253,6 +253,29 @@ class AccountRepository {
           fundId,
           amount
         );
+
+        if(transaction.payee === 'NEED') {
+          await this.dbClient.account.update({
+            where: {
+              id: account.id
+            },
+            data: {
+              primary_balance: account.primary_balance + amount,
+              need: account.need + amount
+            }
+          });
+        } else if(transaction.payee === 'WANT') {
+          await this.dbClient.account.update({
+            where: {
+              id: account.id,
+            },
+            data: {
+              primary_balance: account.primary_balance + amount,
+              want: account.want + amount,
+            }
+          });
+        }
+
         return {
           remaining: 0,
           updated: account,

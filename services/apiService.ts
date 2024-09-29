@@ -78,7 +78,7 @@ class FundApiService {
   }
 
   public async getAllFunds(accountId: string)  {
-    const existingFunds = await axios.get(`/api/fund?accoundid=${accountId}`);
+    const existingFunds = await axios.get(`/api/fund?accountid=${accountId}`);
     return existingFunds.data.data;
   }
 
@@ -91,6 +91,11 @@ class FundApiService {
       accountId: args.accountId
     });
     return newFund.data.data;
+  }
+
+  public async deleteFund(fundId: string) {
+    const deletedFund = await axios.delete(`/api/fund?fundid=${fundId}`);
+    return deletedFund.data.data;
   }
   
 }

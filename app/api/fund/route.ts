@@ -9,12 +9,20 @@ export const PUT = async (req: NextRequest) => {
 
 export const GET = async (req: NextRequest) => {
   const accountId = req.nextUrl.searchParams.get("accountid");
+  console.log(accountId);
   const fundId = req.nextUrl.searchParams.get("fundid");
   if(fundId) {
     const existingFund = await fundService.getFund(fundId);
     return NextResponse.json({status: 200, data: existingFund});
   } else if(accountId) {
     const existingFunds = await fundService.getAllFunds(accountId);
+    console.log(existingFunds);
     return NextResponse.json({status: 200, data: existingFunds});
   }
+}
+
+export const DELETE = async(req: NextRequest) => {
+  const fundId = req.nextUrl.searchParams.get("fundid");
+  await fundService.removeFund(fundId as string);
+  return NextResponse.json({status: 200, data: 'Fund deleted successfully'});
 }

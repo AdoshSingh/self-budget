@@ -21,15 +21,76 @@ import { CustomDropdown } from "./CustomDropdown";
 import { useState } from "react";
 import { TransactionRequest } from "@/domain/requestTypes";
 import { useToast } from "./ui/use-toast";
-import { transactionApiService } from "@/services/apiService";
+import { fundApiService, transactionApiService } from "@/services/apiService";
 
 const Funds = () => {
   const { toast } = useToast();
-  const { account, setAccount, session } = useAppStore();
+  const { account, setAccount, session, setFunds } = useAppStore();
   const [selection, setSelection] = useState<string>("");
   const [open, setOpen] = useState<boolean>(false);
 
   const addInstallment = async (
+    e: React.FormEvent<HTMLFormElement>,
+    args: Omit<TransactionRequest, "accountId">,
+    fundId: string
+  ) => {
+    e.preventDefault();
+    if (!session || !account) return;
+    console.log(args);
+    if (
+      args.type === "" ||
+      args.bracket === "" ||
+      args.amount <= 0 ||
+      !args.date ||
+      args.payee === "" ||
+      args.payer === ""
+    ) {
+      toast({
+        variant: "destructive",
+        title: "Invalid inputs",
+        description: "Please fill all the inputs before adding a transaction",
+      });
+      return;
+    }
+
+    switch (args.payer) {
+      case "NEED":
+        if (args.amount > account.need) {
+          toast({
+            variant: "destructive",
+            title: "Insufficient balance",
+            description:
+              "Your needs dont have enough amount.",
+          });
+          return;
+        }
+        break;
+      case "WANT":
+        if (args.amount > account.want) {
+          toast({
+            variant: "destructive",
+            title: "Insufficient balance",
+            description:
+              "Your wants dont have enough amount.",
+          });
+          return;
+        }
+        break;
+    }
+
+    const resp = await transactionApiService.addTransaction({
+      ...args,
+      accountId: account.id,
+      fundId,
+    });
+    console.log(resp);
+    setAccount(session.user.id);
+    setOpen(false);
+    setFunds(account.id, null);
+    toast({ description: "Installment added successfully" });
+  };
+
+  const withdrawAmount = async (
     e: React.FormEvent<HTMLFormElement>,
     args: Omit<TransactionRequest, "accountId">,
     fundId: string
@@ -57,11 +118,14 @@ const Funds = () => {
       accountId: account.id,
       fundId,
     });
-    console.log(resp);
+
+    const resp2 = await fundApiService.deleteFund(fundId);
+    console.log(resp, resp2);
     setAccount(session.user.id);
     setOpen(false);
-    toast({ description: "Installment added successfully" });
-  };
+    setFunds(account.id, null);
+    toast({ description: "Withdrawn money successfully" });
+  }
 
   const { funds } = useAppStore();
   return (
@@ -124,22 +188,37 @@ const Funds = () => {
             <DialogFooter>
               <form
                 onSubmit={(e) => {
-                  addInstallment(
-                    e,
-                    {
-                      type: "TRANSFER",
-                      date: new Date(),
-                      payee: `Fund: ${ele.title}`,
-                      payer: selection,
-                      bracket: "FUND_TRANSFER",
-                      amount: ele.installment,
-                    },
-                    ele.id
-                  );
+                  if(ele.target > ele.balance) {
+                    addInstallment(
+                      e,
+                      {
+                        type: "TRANSFER",
+                        date: new Date(),
+                        payee: `Fund: ${ele.title}`,
+                        payer: selection,
+                        bracket: "FUND_TRANSFER",
+                        amount: ele.installment,
+                      },
+                      ele.id
+                    );
+                  } else {
+                    withdrawAmount(
+                      e,
+                      {
+                        type: "DEBIT",
+                        date: new Date(),
+                        payee: selection,
+                        payer: `Fund: ${ele.title}`,
+                        bracket: "FUND_DEBIT",
+                        amount: ele.balance,
+                      },
+                      ele.id
+                    )
+                  }
                 }}
                 className="grid gap-4 p-2 border rounded-lg w-full"
               >
-                <h1>Add an installment</h1>
+                <h1>{ele.target <= ele.balance ? "Withdraw balance" :  "Add an installment"}</h1>
                 <CustomDropdown
                   title="Select need or want"
                   options={["NEED", "WANT"]}
@@ -147,7 +226,7 @@ const Funds = () => {
                   setSelection={setSelection}
                 />
                 <DialogTrigger asChild>
-                  <Button type="submit">Add</Button>
+                  <Button type="submit">{ele.target <= ele.balance ? "Withdraw" :  "Add"}</Button>
                 </DialogTrigger>
               </form>
             </DialogFooter>

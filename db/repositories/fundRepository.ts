@@ -80,6 +80,16 @@ class FundRepository {
 
     return updated;
   }
+
+  public async removeFund(fundId: string) {
+    const updated = await this.dbClient.fund.delete({
+      where: {
+        id: fundId
+      }
+    });
+
+    return updated;
+  }
 }
 
 export const fundRepository = FundRepository.getInstance(prisma);

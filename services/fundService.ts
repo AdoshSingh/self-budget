@@ -37,6 +37,10 @@ class FundService {
   public async removeMoneyFromFunds(fundId: string, amount: number) {
     return await fundRepository.removeMoneyFromFunds(fundId, amount);
   }
+
+  public async removeFund(fundId: string) {
+    return await fundRepository.removeFund(fundId);
+  }
 }
 
 const fundService = FundService.getInstance();

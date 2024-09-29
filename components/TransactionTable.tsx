@@ -1,6 +1,6 @@
 "use client";
 
-import type { Transaction, TransactionType } from "@/domain/prismaTypes";
+import type { BracketType, Transaction, TransactionType } from "@/domain/prismaTypes";
 import * as React from "react";
 import {
   ColumnDef,
@@ -85,13 +85,16 @@ export function DataTableDemo({
         const amount = parseFloat(row.getValue("amount"));
         const formatted = convertToCurrency(amount);
         const type = row.getValue("type") as TransactionType;
+        const bracket = row.getValue("bracket") as BracketType;
         return (
           <div
             className={`text-right ${
               type === "CREDIT"
                 ? "text-green-500"
                 : type === "DEBIT"
-                ? "text-red-500"
+                ? bracket === "FUND_DEBIT"
+                ? "text-black"
+                : "text-red-500"
                 : "text-black"
             }`}
           >
