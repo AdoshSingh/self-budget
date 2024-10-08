@@ -10,10 +10,6 @@ const AccountInfo = () => {
   const [totalBankBalance, setTotalBankBalance] = useState<number>();
 
   const { account, funds, setFunds } = useAppStore();
-  if (!account) {
-    return <h2>Loading</h2>;
-  }
-
   useEffect(() => {
     if (account && !funds) {
       setFunds(account.id, null);
@@ -30,6 +26,10 @@ const AccountInfo = () => {
       setTotalBankBalance(accountBalance + fundsBalance);
     }
   }, [account, funds]);
+  if (!account) {
+    return <h2>Loading</h2>;
+  }
+
 
   return (
     <div className="p-6">
