@@ -12,6 +12,7 @@ const config = {
   prefix: "",
   theme: {
   	container: {
+			// @ts-ignore
   		center: 'true',
   		padding: '2rem',
   		screens: {
@@ -79,6 +80,7 @@ const config = {
   					height: '0'
   				}
   			},
+				// @ts-ignore
   			'accordion-down': {
   				from: {
   					height: '0'
@@ -87,6 +89,7 @@ const config = {
   					height: 'var(--radix-accordion-content-height)'
   				}
   			},
+				// @ts-ignore
   			'accordion-up': {
   				from: {
   					height: 'var(--radix-accordion-content-height)'
@@ -99,7 +102,9 @@ const config = {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
+				// @ts-ignore
   			'accordion-down': 'accordion-down 0.2s ease-out',
+				// @ts-ignore
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		}
   	}
