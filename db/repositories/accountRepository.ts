@@ -541,12 +541,27 @@ class AccountRepository {
               updated: updated2,
             };
           }
-
+        } else if(transaction.payee === "INVEST") {
+          const updated2 = await this.dbClient.account.update({
+            where: {
+              id: account.id,
+            },
+            data: {
+              primary_balance: account.primary_balance + amount,
+              investment: existingWant + amount,
+              secondary_balance: existingSecondary - amount,
+              penalty: account.penalty + amount,
+            },
+          });
           return {
             remaining: 0,
-            updated: null,
+            updated: updated2,
           };
         }
+        return {
+          remaining: 0,
+          updated: null,
+        };
 
       case "PENALTY":
         const updated3 = await this.dbClient.account.update({
