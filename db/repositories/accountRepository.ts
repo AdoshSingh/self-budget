@@ -548,7 +548,7 @@ class AccountRepository {
             },
             data: {
               primary_balance: account.primary_balance + amount,
-              investment: existingWant + amount,
+              investment: account.investment + amount,
               secondary_balance: existingSecondary - amount,
               penalty: account.penalty + amount,
             },
