@@ -33,7 +33,6 @@ class UserRepository {
   ) {
     
     const existingUser = await this.findUser(id);
-    console.log(existingUser);
     if(existingUser) return existingUser;
     const newUser = await this.dbClient.user.create({
       data: {

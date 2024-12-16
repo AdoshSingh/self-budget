@@ -48,7 +48,6 @@ export function AddFund() {
       ...args,
       accountId: account.id
     });
-    console.log(resp);
     setFunds(account.id , null);
     setOpen(false);
     toast({ description: "Fund created successfully" });

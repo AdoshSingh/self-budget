@@ -25,8 +25,6 @@ export const authOptions: AuthOptions = {
         undefined,
         user.image || ""
       );
-
-      console.log(dbUser);
       return true;
     },
   },

@@ -16,7 +16,7 @@ export const bracketTypeOptions = [
 
 export const transactionOptions = {
   CREDIT: ["REFUND", "INCOME", "UNREGULATED"],
-  DEBIT: ["NEED", "WANT", "INVEST", "FUND_DEBIT"],
+  DEBIT: ["NEED", "WANT", "INVEST"],
   TRANSFER: ["SURPLUS", "FUND_TRANSFER", "INTERNAL", "PENALTY"],
 };
 

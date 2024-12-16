@@ -39,7 +39,6 @@ export function AddAccount({ userId }: { userId: string }) {
     e.preventDefault();
     const newAccount = await accountApiService.addAccount(userId);
     setAccount(userId);
-    console.log(newAccount);
     setOpen(false);
   };
 

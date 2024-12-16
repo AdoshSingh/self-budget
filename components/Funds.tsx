@@ -36,7 +36,6 @@ const Funds = () => {
   ) => {
     e.preventDefault();
     if (!session || !account) return;
-    console.log(args);
     if (
       args.type === "" ||
       args.bracket === "" ||
@@ -83,7 +82,6 @@ const Funds = () => {
       accountId: account.id,
       fundId,
     });
-    console.log(resp);
     setAccount(session.user.id);
     setOpen(false);
     setFunds(account.id, null);
@@ -120,7 +118,6 @@ const Funds = () => {
     });
 
     const resp2 = await fundApiService.deleteFund(fundId);
-    console.log(resp, resp2);
     setAccount(session.user.id);
     setOpen(false);
     setFunds(account.id, null);

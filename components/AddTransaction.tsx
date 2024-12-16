@@ -92,7 +92,6 @@ export function AddTransaction() {
       ...args,
       accountId: account.id,
     });
-    console.log(resp);
     setAccount(session.user.id);
     setOpen(false);
     toast({ description: "Transaction added successfully" });

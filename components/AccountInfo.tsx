@@ -22,7 +22,6 @@ const AccountInfo = () => {
       funds.forEach((ele) => {
         fundsBalance += ele.balance;
       });
-      console.log(accountBalance + fundsBalance);
       setTotalBankBalance(accountBalance + fundsBalance);
     }
   }, [account, funds]);
