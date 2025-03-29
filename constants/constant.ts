@@ -69,3 +69,9 @@ export const monthNameToNumber: { [key: string]: number } = {
   Nov: 10,
   Dec: 11,
 };
+
+export const responseMessages: Record<'success' | 'fail' | 'error', string> = {
+  success: 'Your request was successful!',
+  fail: 'We couldn\'t complete your request. Please try again.',
+  error: 'Internal Server Error. Please try again later.',
+};

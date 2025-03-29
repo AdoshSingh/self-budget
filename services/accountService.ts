@@ -1,9 +1,13 @@
 import { accountRepository } from "@/db/repositories/accountRepository";
+import ResponseWrapper from "@/utils/responseWrapper";
 
 class AccountService {
   private static instance: AccountService;
+  private responseWrapper: ResponseWrapper;
 
-  private constructor() {}
+  private constructor() {
+    this.responseWrapper = new ResponseWrapper();
+  }
 
   public static getInstance() {
     if (!AccountService.instance) {
@@ -17,17 +21,27 @@ class AccountService {
     secondary_balance: number = 0,
     uesrId: string
   ) {
-    const newAccount = await accountRepository.createAccount(
-      primary_balance,
-      secondary_balance,
-      uesrId
-    );
-    return newAccount;
+    try {
+      const result = await accountRepository.createAccount(
+        primary_balance,
+        secondary_balance,
+        uesrId
+      );
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      console.error('Error in createAccount service -> ', error);
+      return this.responseWrapper.error();
+    }
   }
 
   public async getAccount(userId: string) {
-    const existingAccount = await accountRepository.getAccount(userId);
-    return existingAccount;
+    try {
+      const result = await accountRepository.getAccount(userId);
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      console.error('Error in getAccount service -> ', error);
+      return this.responseWrapper.error();
+    }
   }
 }
 

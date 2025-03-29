@@ -16,12 +16,20 @@ class UserRepository {
   }
 
   public async findUser(id: string) {
-    const existingUser = await this.dbClient.user.findUnique({
-      where: {
-        id: id
+    try {
+      const existingUser = await this.dbClient.user.findUnique({
+        where: {
+          id: id
+        }
+      });
+      if(!existingUser) {
+        return {status: 404, message: 'User not found'};
       }
-    });
-    if(existingUser) return existingUser;
+      return {status: 200, data: existingUser};
+    } catch (error) {
+      console.error('Error in findUser repo -> ', error);
+      return {status: 500}
+    }
   }
 
   public async addUser(
@@ -31,20 +39,28 @@ class UserRepository {
     password?: string,
     photoUrl?: string
   ) {
+    try {
+      const result = await this.findUser(id);
+      if(result.data) return {status: 200, message: 'User fetched successfully.', data: result.data};
+      
+      if(!result.data && result.status === 404){
+        const newUser = await this.dbClient.user.create({
+          data: {
+            id,
+            email,
+            name,
+            password: password || '',
+            img: photoUrl || '',
+          }
+        });
     
-    const existingUser = await this.findUser(id);
-    if(existingUser) return existingUser;
-    const newUser = await this.dbClient.user.create({
-      data: {
-        id,
-        email,
-        name,
-        password: password || '',
-        img: photoUrl || '',
-      }
-    });
-
-    return newUser;
+        return {status: 201, message: 'User added successfully.', data: newUser};
+      } 
+      return {status: 500}
+    } catch (error) {
+      console.error('Error in findUser repo -> ', error);
+      return {status: 500}
+    }
   }
 }
 

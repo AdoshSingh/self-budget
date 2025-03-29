@@ -2,6 +2,7 @@ import prisma from "../prismaClient";
 import type { Account, Transaction } from "@/domain/prismaTypes";
 import { ReturnUpdatedAccount } from "@/domain/returnTypes";
 import { fundRepository } from "./fundRepository";
+import userRepository from "./userRepository";
 
 class AccountRepository {
   private static instance: AccountRepository;
@@ -21,30 +22,63 @@ class AccountRepository {
   public async createAccount(
     primary_balance: number = 0,
     secondary_balance: number = 0,
-    uesrId: string
+    userId: string
   ) {
-    const newAccount = await this.dbClient.account.create({
-      data: {
-        primary_balance: primary_balance,
-        need: (primary_balance * 50) / 100,
-        want: (primary_balance * 30) / 100,
-        investment: (primary_balance * 20) / 100,
-        secondary_balance: secondary_balance,
-        userId: uesrId,
-      },
-    });
-
-    return newAccount;
+    try {
+      const userExists = (await userRepository.findUser(userId)).data;
+      if (!userExists) {
+        return { status: 400, message: 'User does not exist' };
+      }
+  
+      const accountExists = await this.dbClient.account.findUnique({ where: { userId: userId } });
+      if (accountExists) {
+        return { status: 409, message: 'Account already exists for this user.'};
+      }
+  
+      if (isNaN(primary_balance) || primary_balance < 0) {
+        return { status: 400, message: 'Invalid primary balance.' }
+      }
+      if (isNaN(secondary_balance) || secondary_balance < 0) {
+        return { status: 400, message: 'Invalid secondary balance.' }
+      }
+  
+      const newAccount = await this.dbClient.account.create({
+        data: {
+          primary_balance: primary_balance,
+          need: (primary_balance * 50) / 100,
+          want: (primary_balance * 30) / 100,
+          investment: (primary_balance * 20) / 100,
+          secondary_balance: secondary_balance,
+          userId: userId,
+        },
+      });
+      return {status: 201, message: 'Account added successfully', data: newAccount}
+    } catch (error) {
+      console.error('Error in createAccount repo -> ', error);
+      return { status: 500 }
+    }
   }
 
   public async getAccount(userId: string) {
-    const existingAccount = await prisma.account.findUnique({
-      where: {
-        userId: userId,
-      },
-    });
-
-    return existingAccount;
+    try {
+      const userExists = (await userRepository.findUser(userId)).data;
+      if (!userExists) {
+        return { status: 400, message: 'User does not exist' };
+      }
+  
+      const existingAccount = await prisma.account.findUnique({
+        where: {
+          userId: userId,
+        },
+      });
+      if(!existingAccount) {
+        return { status: 404, message: 'Account does not exist.'};
+      }
+      return { status: 200, data: existingAccount};
+    } catch (error) {
+      console.error('Error in getAccount repo -> ', error);
+      return { status: 500 }
+    }
   }
 
   private async creditAccount(
@@ -254,7 +288,7 @@ class AccountRepository {
           amount
         );
 
-        if(transaction.payee === 'NEED') {
+        if (transaction.payee === 'NEED') {
           await this.dbClient.account.update({
             where: {
               id: account.id
@@ -264,7 +298,7 @@ class AccountRepository {
               need: account.need + amount
             }
           });
-        } else if(transaction.payee === 'WANT') {
+        } else if (transaction.payee === 'WANT') {
           await this.dbClient.account.update({
             where: {
               id: account.id,
@@ -541,7 +575,7 @@ class AccountRepository {
               updated: updated2,
             };
           }
-        } else if(transaction.payee === "INVEST") {
+        } else if (transaction.payee === "INVEST") {
           const updated2 = await this.dbClient.account.update({
             where: {
               id: account.id,
