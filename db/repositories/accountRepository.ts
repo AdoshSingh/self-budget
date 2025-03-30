@@ -623,18 +623,22 @@ class AccountRepository {
   public async updateAccount(
     transaction: Partial<Transaction>,
     fundId?: string
-  ): Promise<ReturnUpdatedAccount> {
+  ) {
     const existingAccount = await this.dbClient.account.findUnique({
       where: {
         id: transaction.accountId,
       },
     });
-
-    if (!existingAccount)
+    if (!existingAccount) {
       return {
-        remaining: 0,
-        updated: null,
-      };
+        status: 404, 
+        message: 'Account not found for given account ID.', 
+        data: {
+          remaining: 0, 
+          updated: null
+        }
+      }
+    }
 
     switch (transaction.type) {
       case "CREDIT":
@@ -646,9 +650,12 @@ class AccountRepository {
 
       default:
         return {
-          remaining: 0,
-          updated: null,
-        };
+          status: 400,
+          data: {
+            remaining: 0, 
+            updated: null
+          }
+        }
     }
   }
 

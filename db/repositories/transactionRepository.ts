@@ -54,6 +54,8 @@ class TransactionRepository {
       amount,
       accountId,
     };
+    const result = await accountRepository.updateAccount(inputTransaction, fundId);
+    
     const { remaining, updated } = await accountRepository.updateAccount(
       inputTransaction, fundId
     );
