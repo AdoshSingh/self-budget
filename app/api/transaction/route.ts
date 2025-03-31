@@ -1,44 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import transactionService from "@/services/transactionService";
+import Logger from "@/utils/logger";
+import ResponseWrapper from "@/utils/responseWrapper";
 
 export const GET = async (req: NextRequest) => {
-  const accountId = req.nextUrl.searchParams.get("accountid");
-  const transactionId = req.nextUrl.searchParams.get("userid");
-  if (!transactionId || transactionId === "") {
-    const transactions = await transactionService.getTransactions(
-      accountId as string
-    );
-    return NextResponse.json({ status: 200, data: transactions });
-  } else {
-    const transaction = await transactionService.getOneTransaction(
-      transactionId
-    );
-    return NextResponse.json({ status: 200, data: transaction });
+  const logger = new Logger();
+  const responseWrapper = new ResponseWrapper();
+  try {
+    const accountId = req.nextUrl.searchParams.get("accountId");
+    const transactionId = req.nextUrl.searchParams.get("transactionId");
+
+    if(!accountId) {
+      return NextResponse.json(responseWrapper.fail(400, 'Invalid accountId'));
+    }
+
+    if (!transactionId) {
+      const result = await transactionService.getTransactions(accountId);
+      return NextResponse.json(result);
+    }
+    
+    const result = await transactionService.getOneTransaction(transactionId);
+    return NextResponse.json(result);
+  } catch (error) {
+    logger.error(error, 'GET', '/api/transaction');
+    return NextResponse.json(responseWrapper.error());
   }
 };
 
 export const PUT = async (req: NextRequest) => {
-  const {
-    type,
-    date,
-    payee,
-    bracket,
-    payer,
-    amount,
-    accountId,
-    fundId 
-  } = await req.json();
-
-  const resp = await transactionService.addTransaction(
-    type,
-    date,
-    payee,
-    bracket,
-    payer,
-    amount,
-    accountId,
-    fundId
-  );
-
-  return NextResponse.json({status: 201, data: resp});
+  const logger = new Logger();
+  const responseWrapper = new ResponseWrapper();
+  try {
+    const {
+      type,
+      date,
+      payee,
+      bracket,
+      payer,
+      amount,
+      accountId,
+      fundId 
+    } = await req.json();
+  
+    const result = await transactionService.addTransaction(
+      type,
+      date,
+      payee,
+      bracket,
+      payer,
+      amount,
+      accountId,
+      fundId
+    );
+  
+    return NextResponse.json(result);
+  } catch (error) {
+    logger.error(error, 'PUT', '/api/transaction');
+    return NextResponse.json(responseWrapper.error());
+  }
 };

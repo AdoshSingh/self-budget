@@ -25,6 +25,7 @@ export const authOptions: AuthOptions = {
         undefined,
         user.image || ""
       );
+      if(dbUser.status >= 300) return 'Unable to add user';
       return true;
     },
   },

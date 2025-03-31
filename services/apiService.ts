@@ -18,7 +18,7 @@ class AccountApiService {
   }
 
   public async getAccount(userId: string) {
-    const existingAccount = await axios.get(`/api/account?userid=${userId}`);
+    const existingAccount = await axios.get(`/api/account?userId=${userId}`);
     return existingAccount.data.data;
   }
 }
@@ -35,14 +35,14 @@ class TransactionApiService {
 
   public async getTransactions(accountId: string) {
     const existingTransactions = await axios.get(
-      `/api/transaction?accountid=${accountId}`
+      `/api/transaction?accountId=${accountId}`
     );
     return existingTransactions.data.data;
   }
 
   public async getOneTransaction(accountId: string, transactionId: string) {
     const existingTransaction = await axios.get(
-      `/api/transaction?accountid=${accountId}&transactionid:${transactionId}`
+      `/api/transaction?accountId=${accountId}&transactionId:${transactionId}`
     );
     return existingTransaction.data.data;
   }

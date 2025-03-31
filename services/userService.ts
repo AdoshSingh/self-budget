@@ -1,12 +1,15 @@
 import userRepository from "@/db/repositories/userRepository";
+import Logger from "@/utils/logger";
 import ResponseWrapper from "@/utils/responseWrapper";
 
 class UserService {
   private static instance: UserService;
   private responseWrapper: ResponseWrapper;
+  private logger: Logger;
 
   private constructor() {
     this.responseWrapper = new ResponseWrapper();
+    this.logger = new Logger();
   }
 
   public static getInstance() {
@@ -21,7 +24,7 @@ class UserService {
       const result = await userRepository.findUser(id);
       return this.responseWrapper.response(result.status, result.message, result.data);
     } catch (error) {
-      console.error('Error in findUser service -> ', error);
+      this.logger.error(error, 'findUser', 'UserService');
       return this.responseWrapper.error();
     }
   }
@@ -37,7 +40,7 @@ class UserService {
       const result = await userRepository.addUser(id, email, name, password, photoUrl);
       return this.responseWrapper.response(result.status, result.message, result.data);
     } catch (error) {
-      console.error('Error in addUser service -> ', error);
+      this.logger.error(error, 'addUser', 'UserService');
       return this.responseWrapper.error();
     }
   }

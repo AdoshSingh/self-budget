@@ -1,9 +1,16 @@
 import { fundRepository } from "@/db/repositories/fundRepository";
 import type { FundRequest } from "@/domain/requestTypes";
+import Logger from "@/utils/logger";
+import ResponseWrapper from "@/utils/responseWrapper";
 
 class FundService {
   private static instance: FundService;
-  private constructor() {}
+  private logger: Logger;
+  private responseWrapper: ResponseWrapper;
+  private constructor() {
+    this.logger = new Logger();
+    this.responseWrapper = new ResponseWrapper();
+  }
 
   public static getInstance() {
     if (!FundService.instance) {
@@ -13,33 +20,69 @@ class FundService {
   }
 
   public async createFund(args: FundRequest) {
-    return await fundRepository.createFund(
-      args.title,
-      args.target,
-      args.installment,
-      args.duration,
-      args.accountId
-    );
+    try {
+      const result = await fundRepository.createFund(
+        args.title,
+        args.target,
+        args.installment,
+        args.duration,
+        args.accountId
+      );
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      this.logger.error(error, 'getAllFunds', 'FundService');
+      return this.responseWrapper.error();
+    }
   }
 
   public async getAllFunds(accountId: string) {
-    return await fundRepository.getAllFunds(accountId);
+    try {
+      const result = await fundRepository.getAllFunds(accountId);
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      this.logger.error(error, 'getAllFunds', 'FundService');
+      return this.responseWrapper.error();
+    }
   }
 
-  public async getFund(fundId: string) {
-    return await fundRepository.getFund(fundId);
+  public async getFund(fundId: string, accountId: string) {
+    try {
+      const result = await fundRepository.getFund(fundId, accountId);
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      this.logger.error(error, 'getFund', 'FundService');
+      return this.responseWrapper.error();
+    }
   }
 
   public async addMoneyInFunds(fundId: string, amount: number) {
-    return await fundRepository.addMoneyInFunds(fundId, amount);
+    try {
+      const result = await fundRepository.addMoneyInFunds(fundId, amount);
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      this.logger.error(error, 'getFund', 'FundService');
+      return this.responseWrapper.error();
+    }
   }
 
   public async removeMoneyFromFunds(fundId: string, amount: number) {
-    return await fundRepository.removeMoneyFromFunds(fundId, amount);
+    try {
+      const result = await fundRepository.removeMoneyFromFunds(fundId, amount);
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      this.logger.error(error, 'getFund', 'FundService');
+      return this.responseWrapper.error();
+    }
   }
 
   public async removeFund(fundId: string) {
-    return await fundRepository.removeFund(fundId);
+    try {
+      const result = await fundRepository.removeFund(fundId);
+      return this.responseWrapper.response(result.status, result.message, result.data);
+    } catch (error) {
+      this.logger.error(error, 'getFund', 'FundService');
+      return this.responseWrapper.error();
+    }
   }
 }
 

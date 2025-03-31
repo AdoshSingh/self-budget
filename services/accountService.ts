@@ -1,12 +1,15 @@
 import { accountRepository } from "@/db/repositories/accountRepository";
+import Logger from "@/utils/logger";
 import ResponseWrapper from "@/utils/responseWrapper";
 
 class AccountService {
   private static instance: AccountService;
   private responseWrapper: ResponseWrapper;
+  private logger: Logger;
 
   private constructor() {
     this.responseWrapper = new ResponseWrapper();
+    this.logger = new Logger();
   }
 
   public static getInstance() {
@@ -29,7 +32,7 @@ class AccountService {
       );
       return this.responseWrapper.response(result.status, result.message, result.data);
     } catch (error) {
-      console.error('Error in createAccount service -> ', error);
+      this.logger.error(error, 'createAccount', 'AccountService');
       return this.responseWrapper.error();
     }
   }
@@ -39,7 +42,7 @@ class AccountService {
       const result = await accountRepository.getAccount(userId);
       return this.responseWrapper.response(result.status, result.message, result.data);
     } catch (error) {
-      console.error('Error in getAccount service -> ', error);
+      this.logger.error(error, 'getAccount', 'AccountService');
       return this.responseWrapper.error();
     }
   }

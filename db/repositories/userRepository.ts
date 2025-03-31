@@ -1,11 +1,14 @@
 import prisma from "../prismaClient";
+import Logger from "@/utils/logger";
 
 class UserRepository {
   public static instance: UserRepository;
   private dbClient: typeof prisma;
+  private logger: Logger;
 
   private constructor(dbClient: typeof prisma) {
     this.dbClient = dbClient;
+    this.logger = new Logger();
   }
 
   public static getInstance(dbClient: typeof prisma) {
@@ -27,7 +30,7 @@ class UserRepository {
       }
       return {status: 200, data: existingUser};
     } catch (error) {
-      console.error('Error in findUser repo -> ', error);
+      this.logger.error(error, 'findUser', 'UserRepository');
       return {status: 500}
     }
   }
@@ -58,7 +61,7 @@ class UserRepository {
       } 
       return {status: 500}
     } catch (error) {
-      console.error('Error in findUser repo -> ', error);
+      this.logger.error(error, 'addUser', 'UserRepository');
       return {status: 500}
     }
   }
