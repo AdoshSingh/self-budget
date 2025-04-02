@@ -21,7 +21,8 @@ import { CustomDropdown } from "./CustomDropdown";
 import { useState } from "react";
 import { TransactionRequest } from "@/domain/requestTypes";
 import { useToast } from "./ui/use-toast";
-import { fundApiService, transactionApiService } from "@/services/apiService";
+import { transactionApiService } from "@/services/apiService";
+import { fundApiService } from "@/clients/api/fundService";
 
 const Funds = () => {
   const { toast } = useToast();
@@ -77,14 +78,21 @@ const Funds = () => {
         break;
     }
 
-    const resp = await transactionApiService.addTransaction({
+    const response = await transactionApiService.addTransaction({
       ...args,
       accountId: account.id,
       fundId,
     });
-    setAccount(session.user.id);
+    if (!response || response.status >= 400) {
+      toast({
+        variant: "destructive",
+        description: response.message || "Something went wrong",
+      });
+      return;
+    }
+    setAccount(session.user.id, toast);
     setOpen(false);
-    setFunds(account.id, null);
+    setFunds(account.id, null, toast);
     toast({ description: "Installment added successfully" });
   };
 
@@ -111,16 +119,30 @@ const Funds = () => {
       return;
     }
 
-    const resp = await transactionApiService.addTransaction({
+    const response = await transactionApiService.addTransaction({
       ...args,
       accountId: account.id,
       fundId,
     });
+    if (!response || response.status >= 400) {
+      toast({
+        variant: "destructive",
+        description: response.message || "Something went wrong",
+      });
+      return;
+    }
 
-    const resp2 = await fundApiService.deleteFund(fundId);
-    setAccount(session.user.id);
+    const response2 = await fundApiService.deleteFund(fundId);
+    if (!response2 || response2.status >= 400) {
+      toast({
+        variant: "destructive",
+        description: response2.message || "Something went wrong",
+      });
+      return;
+    }
+    setAccount(session.user.id, toast);
     setOpen(false);
-    setFunds(account.id, null);
+    setFunds(account.id, null, toast);
     toast({ description: "Withdrawn money successfully" });
   }
 

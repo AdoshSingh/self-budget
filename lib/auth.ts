@@ -20,12 +20,12 @@ export const authOptions: AuthOptions = {
     async signIn({ user, account, profile }) {
       const dbUser = await userService.addUser(
         user.id,
-        user.name || "",
         user.email || "",
+        user.name || "",
         undefined,
         user.image || ""
       );
-      if(dbUser.status >= 300) return 'Unable to add user';
+      if(dbUser.status >= 400) return 'Unable to add user';
       return true;
     },
   },

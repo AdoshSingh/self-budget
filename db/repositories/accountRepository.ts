@@ -3,6 +3,7 @@ import type { Account, Transaction } from "@/domain/prismaTypes";
 import { fundRepository } from "./fundRepository";
 import userRepository from "./userRepository";
 import Logger from "@/utils/logger";
+import type { RepoResult } from "@/domain/returnTypes";
 
 class AccountRepository {
   private static instance: AccountRepository;
@@ -25,7 +26,7 @@ class AccountRepository {
     primary_balance: number = 0,
     secondary_balance: number = 0,
     userId: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const userExists = (await userRepository.findUser(userId)).data;
       if (!userExists) {
@@ -70,7 +71,7 @@ class AccountRepository {
     }
   }
 
-  public async getAccount(userId: string) {
+  public async getAccount(userId: string): Promise<RepoResult> {
     try {
       const userExists = (await userRepository.findUser(userId)).data;
       if (!userExists) {
@@ -95,8 +96,7 @@ class AccountRepository {
   private async creditAccount(
     transaction: Partial<Transaction>,
     account: Account,
-    fundId?: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const amount = transaction.amount;
       if (!amount) {
@@ -220,8 +220,7 @@ class AccountRepository {
   private async debitAccount(
     transaction: Partial<Transaction>,
     account: Account,
-    fundId?: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const amount = transaction.amount;
       if (!amount) return { status: 400, message: "Please enter a valid amount."};
@@ -275,7 +274,7 @@ class AccountRepository {
     transaction: Partial<Transaction>,
     account: Account,
     fundId?: string
-  ){
+  ): Promise<RepoResult> {
     try {
       const amount = transaction.amount;
       if (!amount) return { status: 400, message: "Please enter a valid amount."};
@@ -570,7 +569,7 @@ class AccountRepository {
   public async updateAccount(
     transaction: Partial<Transaction>,
     fundId?: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const existingAccount = await this.dbClient.account.findUnique({
         where: {
@@ -589,7 +588,6 @@ class AccountRepository {
           const result = await this.creditAccount(
             transaction,
             existingAccount,
-            fundId
           );
           return {
             status: result.status,
@@ -601,7 +599,6 @@ class AccountRepository {
           const result = await this.debitAccount(
             transaction,
             existingAccount,
-            fundId
           );
           return {
             status: result.status,

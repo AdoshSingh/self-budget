@@ -2,6 +2,7 @@ import { fundRepository } from "@/db/repositories/fundRepository";
 import type { FundRequest } from "@/domain/requestTypes";
 import Logger from "@/utils/logger";
 import ResponseWrapper from "@/utils/responseWrapper";
+import type { ServiceResponse } from "@/domain/returnTypes";
 
 class FundService {
   private static instance: FundService;
@@ -19,7 +20,7 @@ class FundService {
     return FundService.instance;
   }
 
-  public async createFund(args: FundRequest) {
+  public async createFund(args: FundRequest): Promise<ServiceResponse> {
     try {
       const result = await fundRepository.createFund(
         args.title,
@@ -35,7 +36,7 @@ class FundService {
     }
   }
 
-  public async getAllFunds(accountId: string) {
+  public async getAllFunds(accountId: string): Promise<ServiceResponse> {
     try {
       const result = await fundRepository.getAllFunds(accountId);
       return this.responseWrapper.response(result.status, result.message, result.data);
@@ -45,7 +46,7 @@ class FundService {
     }
   }
 
-  public async getFund(fundId: string, accountId: string) {
+  public async getFund(fundId: string, accountId: string): Promise<ServiceResponse> {
     try {
       const result = await fundRepository.getFund(fundId, accountId);
       return this.responseWrapper.response(result.status, result.message, result.data);
@@ -55,7 +56,7 @@ class FundService {
     }
   }
 
-  public async addMoneyInFunds(fundId: string, amount: number) {
+  public async addMoneyInFunds(fundId: string, amount: number): Promise<ServiceResponse> {
     try {
       const result = await fundRepository.addMoneyInFunds(fundId, amount);
       return this.responseWrapper.response(result.status, result.message, result.data);
@@ -65,7 +66,7 @@ class FundService {
     }
   }
 
-  public async removeMoneyFromFunds(fundId: string, amount: number) {
+  public async removeMoneyFromFunds(fundId: string, amount: number): Promise<ServiceResponse> {
     try {
       const result = await fundRepository.removeMoneyFromFunds(fundId, amount);
       return this.responseWrapper.response(result.status, result.message, result.data);
@@ -75,7 +76,7 @@ class FundService {
     }
   }
 
-  public async removeFund(fundId: string) {
+  public async removeFund(fundId: string): Promise<ServiceResponse> {
     try {
       const result = await fundRepository.removeFund(fundId);
       return this.responseWrapper.response(result.status, result.message, result.data);

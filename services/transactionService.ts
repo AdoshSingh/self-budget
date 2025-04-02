@@ -2,6 +2,7 @@ import { transactionRepository } from "@/db/repositories/transactionRepository";
 import type { TransactionType, BracketType } from "@/domain/prismaTypes";
 import ResponseWrapper from "@/utils/responseWrapper";
 import Logger from "@/utils/logger";
+import type { RepoResult } from "@/domain/returnTypes";
 
 class TransactionService {
   private static instance: TransactionService;
@@ -20,7 +21,7 @@ class TransactionService {
     return TransactionService.instance;
   }
 
-  public async getTransactions(accountId: string) {
+  public async getTransactions(accountId: string): Promise<RepoResult> {
     try {
       const result = await transactionRepository.getTransactions(accountId);
       return this.responseWrapper.response(result.status, result.message, result.data);
@@ -30,7 +31,7 @@ class TransactionService {
     }
   }
 
-  public async getOneTransaction(transactionId: string) {
+  public async getOneTransaction(transactionId: string): Promise<RepoResult> {
     try {
       const result = await transactionRepository.getOneTransaction(transactionId);
       return this.responseWrapper.response(result.status, result.message, result.data);
@@ -49,7 +50,7 @@ class TransactionService {
     amount: number,
     accountId: string,
     fundId?: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const result = await transactionRepository.addTransaction(
         type,

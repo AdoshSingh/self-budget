@@ -1,5 +1,6 @@
 import prisma from "../prismaClient";
 import Logger from "@/utils/logger";
+import type { RepoResult } from "@/domain/returnTypes";
 
 class UserRepository {
   public static instance: UserRepository;
@@ -18,7 +19,7 @@ class UserRepository {
     return UserRepository.instance;
   }
 
-  public async findUser(id: string) {
+  public async findUser(id: string): Promise<RepoResult> {
     try {
       const existingUser = await this.dbClient.user.findUnique({
         where: {
@@ -41,7 +42,7 @@ class UserRepository {
     name: string,
     password?: string,
     photoUrl?: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const result = await this.findUser(id);
       if(result.data) return {status: 200, message: 'User fetched successfully.', data: result.data};

@@ -17,7 +17,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { fundApiService } from "@/services/apiService";
+import { fundApiService } from "@/clients/api/fundService";
 
 export function AddFund() {
   const { toast } = useToast();
@@ -44,11 +44,16 @@ export function AddFund() {
       return;
     }
 
-    const resp = await fundApiService.createFund({
-      ...args,
-      accountId: account.id
-    });
-    setFunds(account.id , null);
+    const response = await fundApiService.createFund({...args, accountId: account.id});
+
+    if(!response || response.status >= 400) {
+      toast({
+        variant: "destructive",
+        description: response.message || "Something went wrong",
+      });
+      return;
+    }
+    setFunds(account.id , null, toast);
     setOpen(false);
     toast({ description: "Fund created successfully" });
   };

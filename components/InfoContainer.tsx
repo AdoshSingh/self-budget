@@ -7,6 +7,7 @@ import LoaderPage from "./LoaderPage";
 import { Session } from "next-auth";
 import { AccountSkeleton } from "./AccountSkeleton";
 import { TransactionSkeleton } from "./TransactionSkeleton";
+import { useToast } from "./ui/use-toast";
 
 export default function InfoContainer({
   userSession,
@@ -14,9 +15,11 @@ export default function InfoContainer({
   userSession: Session;
 }) {
   const { account, setAccount, setSession } = useAppStore();
+  const { toast } = useToast();
+  
   useEffect(() => {
     setSession(userSession);
-    setAccount(userSession.user.id);
+    setAccount(userSession.user.id, toast);
   }, []);
 
   if (account === undefined) {

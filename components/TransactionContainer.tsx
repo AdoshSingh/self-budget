@@ -5,13 +5,15 @@ import NoTransactionPlaceholder from "./NoTransactionPlaceholder";
 import Transactions from "./Transactions";
 import { useAppStore } from "@/store/store";
 import { TransactionSkeleton } from "./TransactionSkeleton";
+import { useToast } from "./ui/use-toast";
 
 const TransactionContainer = () => {
   const { account, transactions, setTransactions } = useAppStore();
+  const {toast} = useToast();
 
   useEffect(() => {
     if (account?.id) {
-      setTransactions(account.id);
+      setTransactions(account.id, toast);
     }
   }, [account]);
 

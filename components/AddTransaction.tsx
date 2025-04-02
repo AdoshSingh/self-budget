@@ -88,11 +88,18 @@ export function AddTransaction() {
       }
     }
 
-    const resp = await transactionApiService.addTransaction({
+    const response = await transactionApiService.addTransaction({
       ...args,
       accountId: account.id,
     });
-    setAccount(session.user.id);
+    if (!response || response.status >= 400) {
+      toast({
+        variant: "destructive",
+        description: response.message || "Something went wrong",
+      });
+      return;
+    }
+    setAccount(session.user.id, toast);
     setOpen(false);
     toast({ description: "Transaction added successfully" });
   };

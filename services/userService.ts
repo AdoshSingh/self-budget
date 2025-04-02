@@ -1,6 +1,7 @@
 import userRepository from "@/db/repositories/userRepository";
 import Logger from "@/utils/logger";
 import ResponseWrapper from "@/utils/responseWrapper";
+import type { ServiceResponse } from "@/domain/returnTypes";
 
 class UserService {
   private static instance: UserService;
@@ -19,7 +20,7 @@ class UserService {
     return UserService.instance;
   }
 
-  public async findUser(id: string) {
+  public async findUser(id: string): Promise<ServiceResponse> {
     try {
       const result = await userRepository.findUser(id);
       return this.responseWrapper.response(result.status, result.message, result.data);
@@ -35,7 +36,7 @@ class UserService {
     name: string,
     password?: string,
     photoUrl?: string
-  ) {
+  ): Promise<ServiceResponse> {
     try {
       const result = await userRepository.addUser(id, email, name, password, photoUrl);
       return this.responseWrapper.response(result.status, result.message, result.data);

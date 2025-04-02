@@ -1,6 +1,6 @@
 import prisma from "../prismaClient";
 import Logger from "@/utils/logger";
-import { accountRepository } from "./accountRepository";
+import type { RepoResult } from "@/domain/returnTypes";
 
 class FundRepository {
   private static instance: FundRepository;
@@ -25,7 +25,7 @@ class FundRepository {
     installment: number,
     duration: number,
     accountId: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const account = await this.dbClient.account.findUnique({where: {id: accountId}});
       if(!account){
@@ -60,7 +60,7 @@ class FundRepository {
     }
   }
 
-  public async getAllFunds(accountId: string) {
+  public async getAllFunds(accountId: string): Promise<RepoResult> {
     try {
       const account = await this.dbClient.account.findUnique({where: {id: accountId}});
       if(!account){
@@ -82,7 +82,7 @@ class FundRepository {
     }
   }
 
-  public async getFund(fundId: string, accountId: string) {
+  public async getFund(fundId: string, accountId: string): Promise<RepoResult> {
     try {
       const existingFund = await this.dbClient.fund.findUnique({
         where: {
@@ -100,7 +100,7 @@ class FundRepository {
     }
   }
 
-  public async addMoneyInFunds(fundId: string, amount: number) {
+  public async addMoneyInFunds(fundId: string, amount: number): Promise<RepoResult> {
     try {
       const updatedFund = await this.dbClient.fund.update({
         where: {
@@ -127,7 +127,7 @@ class FundRepository {
     }
   }
 
-  public async removeMoneyFromFunds(fundId: string, amount: number) {
+  public async removeMoneyFromFunds(fundId: string, amount: number): Promise<RepoResult> {
     try {
       const updatedFund = await this.dbClient.fund.update({
         where: {
@@ -157,7 +157,7 @@ class FundRepository {
     }
   }
 
-  public async removeFund(fundId: string) {
+  public async removeFund(fundId: string): Promise<RepoResult> {
     try {
       const updated = await this.dbClient.fund.delete({
         where: {

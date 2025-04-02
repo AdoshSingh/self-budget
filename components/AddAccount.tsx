@@ -26,19 +26,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IndianRupee } from "lucide-react";
 import { DialogBox } from "./DialogBox";
-import { accountApiService } from "@/services/apiService";
+import { accountApiService } from "@/clients/api/accountService";
 import { useAppStore } from "@/store/store";
+import { useToast } from "./ui/use-toast";
 
 export function AddAccount({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const {setAccount} = useAppStore();
+  const { toast } = useToast();
   
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const formSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newAccount = await accountApiService.addAccount(userId);
-    setAccount(userId);
+    const response = await accountApiService.addAccount(userId);
+    if(!response || response.status >= 400 || !response.data) {
+      toast({
+        description: response.message || "Something went wrong!!",
+        variant: "destructive",
+      });
+      return;
+    } else {
+      toast({
+        description: response.message || "Account added successfully",
+        variant: "default",
+      });
+    }
+    setAccount(userId, toast);
     setOpen(false);
   };
 

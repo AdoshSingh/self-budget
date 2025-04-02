@@ -1,6 +1,7 @@
 import { accountRepository } from "@/db/repositories/accountRepository";
 import Logger from "@/utils/logger";
 import ResponseWrapper from "@/utils/responseWrapper";
+import type { ServiceResponse } from "@/domain/returnTypes";
 
 class AccountService {
   private static instance: AccountService;
@@ -23,7 +24,7 @@ class AccountService {
     primary_balance: number = 0,
     secondary_balance: number = 0,
     uesrId: string
-  ) {
+  ): Promise<ServiceResponse> {
     try {
       const result = await accountRepository.createAccount(
         primary_balance,
@@ -37,7 +38,7 @@ class AccountService {
     }
   }
 
-  public async getAccount(userId: string) {
+  public async getAccount(userId: string): Promise<ServiceResponse> {
     try {
       const result = await accountRepository.getAccount(userId);
       return this.responseWrapper.response(result.status, result.message, result.data);

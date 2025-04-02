@@ -5,6 +5,7 @@ import { useAppStore } from "@/store/store";
 import { Fund } from "@/domain/prismaTypes";
 import Funds from "./Funds";
 import NoFundsPlaceholder from "./NoFundsPlaceholder";
+import { useToast } from "./ui/use-toast";
 
 const FundContainer = ({
   userSession,
@@ -14,22 +15,24 @@ const FundContainer = ({
   funds: Fund[];
 }) => {
   const { session, account, setAccount, setSession, setFunds } = useAppStore();
+  const { toast } = useToast();
+  
   useEffect(() => {
     if (session && account) {
-      setFunds(null, funds);
+      setFunds(null, funds, toast);
       return;
     } else if (session && !account) {
-      setAccount(userSession.user.id);
-      setFunds(null, funds);
+      setAccount(userSession.user.id, toast);
+      setFunds(null, funds, toast);
       return;
     } else if (!session && account) {
       setSession(userSession);
-      setFunds(null, funds);
+      setFunds(null, funds, toast);
       return;
     } else {
-      setAccount(userSession.user.id);
+      setAccount(userSession.user.id, toast);
       setSession(userSession);
-      setFunds(null, funds);
+      setFunds(null, funds, toast);
     }
   }, []);
 

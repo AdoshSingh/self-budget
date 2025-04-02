@@ -5,14 +5,17 @@ import { IndianRupee } from "lucide-react";
 import { AddTransaction } from "./AddTransaction";
 import { convertToCurrency } from "@/utils/formatNumber";
 import { useEffect, useState } from "react";
+import { useToast } from "./ui/use-toast";
 
 const AccountInfo = () => {
   const [totalBankBalance, setTotalBankBalance] = useState<number>();
 
   const { account, funds, setFunds } = useAppStore();
+  const { toast } = useToast();
+  
   useEffect(() => {
     if (account && !funds) {
-      setFunds(account.id, null);
+      setFunds(account.id, null, toast);
     }
 
     if (account && funds) {

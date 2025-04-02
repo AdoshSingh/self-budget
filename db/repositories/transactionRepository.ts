@@ -2,6 +2,7 @@ import prisma from "../prismaClient";
 import { accountRepository } from "./accountRepository";
 import type { TransactionType, BracketType } from "@/domain/prismaTypes";
 import Logger from "@/utils/logger";
+import type { RepoResult } from "@/domain/returnTypes";
 
 class TransactionRepository {
   private static instance: TransactionRepository;
@@ -20,7 +21,7 @@ class TransactionRepository {
     return TransactionRepository.instance;
   }
 
-  public async getTransactions(accountId: string) {
+  public async getTransactions(accountId: string): Promise<RepoResult> {
     try {
       const existingAccount = (await accountRepository.getAccount(accountId)).data;
       if (!existingAccount) {
@@ -38,7 +39,7 @@ class TransactionRepository {
     }
   }
 
-  public async getOneTransaction(transactionId: string) {
+  public async getOneTransaction(transactionId: string): Promise<RepoResult> {
     try {
       const existingTransaction = await this.dbClient.transaction.findUnique({
         where: {
@@ -64,7 +65,7 @@ class TransactionRepository {
     amount: number,
     accountId: string,
     fundId?: string
-  ) {
+  ): Promise<RepoResult> {
     try {
       const inputTransaction = {
         type,
