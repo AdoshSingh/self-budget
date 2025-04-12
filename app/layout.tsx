@@ -23,14 +23,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable
-        )}
-      >
-        <SessionWrapper>
+    <SessionWrapper>
+      <html lang="en">
+        <body
+          className={cn(
+            "min-h-screen bg-background font-sans antialiased",
+            fontSans.variable
+          )}
+        >
           <div className="flex flex-col">
             <Navbar />
             <div className="flex h-[90vh]">
@@ -39,8 +39,8 @@ export default function RootLayout({
             </div>
           </div>
           <Toaster />
-        </SessionWrapper>
-      </body>
-    </html>
+        </body>
+      </html>
+    </SessionWrapper>
   );
 }
