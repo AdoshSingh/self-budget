@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
-import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
-import Navbar from "@/components/Topbar";
-import Sidebar from "@/components/Sidebar";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -14,7 +11,7 @@ const fontSans = FontSans({
 
 export const metadata: Metadata = {
   title: "X_BUDGET",
-  description: "Self budgeting application",
+  description: "Log in to your account",
 };
 
 export default function RootLayout({
@@ -31,14 +28,7 @@ export default function RootLayout({
             fontSans.variable
           )}
         >
-          <div className="flex flex-col">
-            <Navbar />
-            <div className="flex h-[90vh]">
-              <Sidebar />
-              {children}
-            </div>
-          </div>
-          <Toaster />
+          {children}
         </body>
       </html>
     </SessionWrapper>
