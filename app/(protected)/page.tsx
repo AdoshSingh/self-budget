@@ -8,9 +8,9 @@ const page = async () => {
 
   if (!session) {
     redirect("/auth/signin");
-  } else {
-    return <InfoContainer userSession={session} />;
   }
+    
+  return <InfoContainer userSession={session} />;
 };
 
 export default page;

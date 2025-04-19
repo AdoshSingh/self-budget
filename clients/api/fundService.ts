@@ -1,5 +1,6 @@
-import { FundRequest } from "@/domain/requestTypes";
 import { ApiService } from "../apiService";
+import type { FundRequest } from "@/domain/requestTypes";
+import type { Fund } from "@/domain/prismaTypes";
 
 class FundApiService {
   private static instance: FundApiService;
@@ -17,7 +18,7 @@ class FundApiService {
   }
 
   public async getAllFunds(accountId: string)  {
-    return await this.apiService.get<{status: number, message?: string, data: any}>("/api/fund", { accountId });
+    return await this.apiService.get<{status: number, message?: string, data: Fund[] | null | undefined}>("/api/fund", { accountId });
   }
 
   public async createFund(args: FundRequest) {

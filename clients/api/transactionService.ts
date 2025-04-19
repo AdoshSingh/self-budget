@@ -1,5 +1,6 @@
 import { ApiService } from "../apiService";
 import type { TransactionRequest } from "@/domain/requestTypes";
+import type { Transaction } from "@/domain/prismaTypes";
 
 class TransactionApiService {
   private static instance: TransactionApiService;
@@ -17,7 +18,7 @@ class TransactionApiService {
   }
 
   public async getTransactions(accountId: string) {
-    return await this.apiService.get<{status: number, message?: string, data?: any}>("/api/transaction", { accountId });
+    return await this.apiService.get<{status: number, message?: string, data: Transaction[] | null | undefined}>("/api/transaction", { accountId });
   }
 
   public async getOneTransaction(accountId: string, transactionId: string) {

@@ -2,36 +2,42 @@
 import { useEffect } from "react";
 import NoAccountPlaceholder from "./NoAccountPlaceholder";
 import AccountContainer from "./AccountContainer";
-import { useAppStore } from "@/store/store";
-import LoaderPage from "./LoaderPage";
 import { Session } from "next-auth";
 import { AccountSkeleton } from "./AccountSkeleton";
 import { TransactionSkeleton } from "./TransactionSkeleton";
-import { useToast } from "./ui/use-toast";
+import { useAccountStore } from "@/store/accountStore";
+import { useTransactionStore } from "@/store/transactionStore";
 
 export default function InfoContainer({
   userSession,
 }: {
   userSession: Session;
 }) {
-  const { account, setAccount, setSession } = useAppStore();
-  const { toast } = useToast();
-  
+  const accountStore = useAccountStore();
+  const transactionStore = useTransactionStore();
+
   useEffect(() => {
-    setSession(userSession);
-    setAccount(userSession.user.id, toast);
+    accountStore.fetchAccount(userSession.user.id).then(() => {
+      if (accountStore.account) {
+        transactionStore.fetchTransactions(accountStore.account.id);
+      }
+    });
   }, []);
 
-  if (account === undefined) {
+  if (accountStore.loading || transactionStore.loading) {
     return (
       <div className="flex-1">
         <AccountSkeleton />
-        <TransactionSkeleton/>
+        <TransactionSkeleton />
       </div>
     );
-  } else if (account === null) {
+  }
+
+  if (accountStore.accountExists === false && accountStore.account === null) {
     return <NoAccountPlaceholder userId={userSession.user.id} />;
-  } else {
+  } 
+  
+  if (accountStore.accountExists === true && accountStore.account) {
     return <AccountContainer />;
   }
 }
