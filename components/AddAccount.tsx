@@ -27,12 +27,14 @@ import { Label } from "@/components/ui/label";
 import { IndianRupee } from "lucide-react";
 import { DialogBox } from "./DialogBox";
 import { accountApiService } from "@/clients/api/accountService";
-import { useAppStore } from "@/store/store";
 import { useToast } from "./ui/use-toast";
+import { useSession } from "next-auth/react";
+import { useAccountStore } from "@/store/accountStore";
 
-export function AddAccount({ userId }: { userId: string }) {
+export function AddAccount() {
   const [open, setOpen] = useState(false);
-  const {setAccount} = useAppStore();
+  const userId = useSession().data?.user;
+  const accountStore = useAccountStore();
   const { toast } = useToast();
   
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -52,7 +54,7 @@ export function AddAccount({ userId }: { userId: string }) {
         variant: "default",
       });
     }
-    setAccount(userId, toast);
+    accountStore.setAccount(response.data);
     setOpen(false);
   };
 

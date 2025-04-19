@@ -17,7 +17,7 @@ class AccountApiService {
   }   
 
   public async addAccount(userId: string) {
-    return await this.apiService.put<{status: number, message?: string, data?: any}>('/api/account', { userId });
+    return await this.apiService.put<{status: number, message?: string, data: Account | null | undefined}>('/api/account', { userId });
   }
 
   public async getAccount(userId: string) {
