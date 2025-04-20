@@ -13,27 +13,42 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAppStore } from "@/store/store";
+import { useTransactionStore } from "@/store/transactionStore";
+import { useAccountStore } from "@/store/accountStore";
 import { CustomDropdown } from "./CustomDropdown";
 import { transactionOptions } from "@/constants/constant";
 import { DatePickerDemo } from "./DatePicker";
 import { TransactionRequest } from "@/domain/requestTypes";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { transactionApiService } from "@/services/apiService";
+import { transactionApiService } from "@/clients/api/transactionService";
 import { useToast } from "@/components/ui/use-toast";
 
 export function AddTransaction() {
-  const { toast } = useToast();
-  const { account, setAccount, session } = useAppStore();
   const [open, setOpen] = useState(false);
+
+  const { account } = useAccountStore((state) => ({
+    account: state.account,
+
+  }))
+  
+  const { toast } = useToast();
 
   const addTransaction = async (
     e: React.FormEvent<HTMLFormElement>,
     args: Omit<TransactionRequest, "accountId">
   ) => {
     e.preventDefault();
-    if (!session || !account) return;
+    
+    if(!account) {
+      toast({
+        variant: "destructive",
+        title: "Something went wrong",
+        description: "Please try again",
+      });
+      return;
+    }
+
     if (
       args.type === "" ||
       args.bracket === "" ||

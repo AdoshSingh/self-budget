@@ -26,7 +26,7 @@ class TransactionApiService {
   }
 
   public async addTransaction(args: TransactionRequest) {
-    return await this.apiService.put<{status: number, message?: string, data?: any}>("/api/transaction", {
+    return await this.apiService.put<{status: number, message?: string, data: Transaction | null | undefined}>("/api/transaction", {
       type: args.type,
       date: args.date,
       payee: args.payee,
