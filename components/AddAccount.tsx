@@ -54,7 +54,13 @@ export function AddAccount() {
         variant: "default",
       });
     }
-    accountStore.setAccount(response.data);
+    
+    useAccountStore.setState({
+      account: response.data,
+      accountExists: true,
+      loading: false,
+    });
+    
     setOpen(false);
   };
 

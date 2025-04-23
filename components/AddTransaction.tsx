@@ -114,19 +114,102 @@ export function AddTransaction() {
       });
       return;
     }
-    setAccount(session.user.id, toast);
-    setOpen(false);
-    toast({ description: "Transaction added successfully" });
-  };
 
-  // const addTransfer = async (
-  //   e: React.FormEvent<HTMLFormElement>,
-  //   args: Omit<TransactionRequest, "accountId">
-  // ) => {
-  //   e.preventDefault();
-  //   if(!session || !account) return;
+    const transaction = response.data;
+    if (!transaction) {
+      toast({
+        variant: "destructive",
+        title: "Something went wrong",
+        description: "Please try again",
+      });
+      return;
+    }
+
+    switch (transaction.type) {
+      case "CREDIT":{
+        if(transaction.bracket === "INCOME") {
+          useAccountStore.setState((state) => {
+            if (!state.account) return {};
+          
+            return {
+              account: {
+                ...state.account,
+                primary_balance: state.account.primary_balance + transaction.amount,
+                need: state.account.need + ((transaction.amount * 50) / 100),
+                want: state.account.want + ((transaction.amount * 30) / 100),
+                investment: state.account.investment + ((transaction.amount * 20) / 100),
+              },
+            };
+          });
+        } else if(transaction.bracket === "UNREGULATED") {
+          useAccountStore.setState((state) => {
+            if (!state.account) return {};
+          
+            return {
+              account: {
+                ...state.account,
+                secondary_balance: state.account.secondary_balance + transaction.amount,
+              },
+            };
+          });
+        } else if(transaction.bracket === "REFUND") {
+          const payeeToField: Record<
+            string,
+            keyof Pick<typeof account, "need" | "want" | "investment">
+          > = {
+            NEED: "need",
+            WANT: "want",
+            INVEST: "investment",
+          };
+  
+          const updatedField = payeeToField[transaction.payee];
+
+          useAccountStore.setState((state) => {
+            if (!state.account) return {};
+          
+            return {
+              account: {
+                ...state.account,
+                primary_balance: state.account.primary_balance + transaction.amount,
+                [updatedField]: state.account[updatedField] + transaction.amount,
+              },
+            };
+          });
+        }
+      } break;
+
+      case "DEBIT": {
+        const brackets: Record<
+          string, 
+          keyof Pick<typeof account, "need" | "want" | "investment">
+        > = {
+          NEED: "need",
+          WANT: "want",
+          INVEST: "investment",
+        };
     
-  // };
+        const bracketKey = brackets[transaction.bracket];
+
+        useAccountStore.setState((state) => {
+          if (!state.account) return {};
+        
+          return {
+            account: {
+              ...state.account,
+              primary_balance: state.account.primary_balance - transaction.amount,
+              [bracketKey]: state.account[bracketKey] - transaction.amount,
+            },
+          };
+        });
+      } break;
+
+      case "TRANSFER": {
+        
+      }
+    }
+    toast({ description: "Transaction added successfully" });
+    setOpen(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -8,7 +8,6 @@ type AccountStore = {
   loading: boolean;
   error: string | null;
   fetchAccount: (userId: string) => Promise<void>;
-  setAccount: (account: Account) => Promise<void>;
 };
 
 export const useAccountStore = create<AccountStore>((set) => ({
@@ -47,12 +46,5 @@ export const useAccountStore = create<AccountStore>((set) => ({
         loading: false,
       }));
     }
-  },
-  setAccount: async (account: Account) => {
-    set(() => ({
-      accountExists: true,
-      account: account,
-      loading: false
-    }))
   }
 }));
