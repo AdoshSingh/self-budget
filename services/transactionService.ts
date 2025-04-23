@@ -21,9 +21,9 @@ class TransactionService {
     return TransactionService.instance;
   }
 
-  public async getTransactions(accountId: string): Promise<RepoResult> {
+  public async getTransactions(accountId: string, userId: string): Promise<RepoResult> {
     try {
-      const result = await transactionRepository.getTransactions(accountId);
+      const result = await transactionRepository.getTransactions(accountId, userId);
       return this.responseWrapper.response(result.status, result.message, result.data);
     } catch (error) {
       this.logger.error(error, 'getTransactions', 'TransactionService');

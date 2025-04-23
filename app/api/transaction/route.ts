@@ -21,7 +21,7 @@ export const GET = async (req: NextRequest) => {
     }
 
     if (!transactionId) {
-      const result = await transactionService.getTransactions(accountId);
+      const result = await transactionService.getTransactions(accountId, session.user.id);
       return NextResponse.json(result);
     }
 

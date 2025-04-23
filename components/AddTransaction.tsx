@@ -29,8 +29,9 @@ export function AddTransaction() {
 
   const { account } = useAccountStore((state) => ({
     account: state.account,
+  }));
 
-  }))
+  const addTransactionInState = useTransactionStore(state => state.addTransaction);
   
   const { toast } = useToast();
 
@@ -204,9 +205,91 @@ export function AddTransaction() {
       } break;
 
       case "TRANSFER": {
-        
+        if(transaction.bracket === "SURPLUS") {
+          useAccountStore.setState((state) => {
+            if (!state.account) return {};
+          
+            return {
+              account: {
+                ...state.account,
+                primary_balance: 0,
+                need: 0,
+                want: 0,
+                investment: 0,
+                secondary_balance: state.account.secondary_balance + transaction.amount,
+              },
+            };
+          });
+        } else if (transaction.bracket === "INTERNAL") {
+          const payeeField: Record<string, keyof Pick<typeof account, "need" | "want" | "investment">> = {
+            NEED: "need",
+            WANT: "want",
+            INVEST: "investment",
+          };
+          const payeeKey = payeeField[transaction.payee];
+
+          const payerFeild: Record<
+            string,
+            keyof Pick<
+                typeof account,
+                "need" | "want" | "investment" | "secondary_balance"
+              >
+            | "fund"
+          > = {
+            NEED: "need",
+            WANT: "want",
+            INVEST: "investment",
+            SECONDARY: "secondary_balance",
+            FUND: "fund"
+          };
+          const payerKey = payerFeild[transaction.payer];
+
+          //need to handle the fund as well but later
+
+          const payee = transaction.payee;
+          const newPayerFeild = Object.fromEntries(
+            Object.entries(payerFeild).filter(([ele]) => ele !== payee)
+          );
+
+          const newPayerKey = newPayerFeild[transaction.payer];
+          if(newPayerKey === "secondary_balance") {
+            useAccountStore.setState((state) => {
+              if (!state.account) return {};
+          
+              return {
+                account: {
+                  ...state.account,
+                  primary_balance: state.account.primary_balance + transaction.amount,
+                  [payeeKey]: state.account[payeeKey] + transaction.amount,
+                  [newPayerKey]: state.account[newPayerKey] - transaction.amount,
+                },
+              };
+            });
+          } else {
+            if(!newPayerKey || newPayerKey === 'fund') {
+              toast({
+                variant: "destructive",
+                title: "Something went wrong",
+                description: "Please try again",
+              });
+              return;
+            }
+            useAccountStore.setState((state) => {
+              if (!state.account) return {};
+          
+              return {
+                account: {
+                  ...state.account,
+                  [payeeKey]: state.account[payeeKey] + transaction.amount,
+                  [newPayerKey]: state.account[newPayerKey] - transaction.amount,
+                },
+              };
+            });
+          }
+        }
       }
     }
+    addTransactionInState(transaction);
     toast({ description: "Transaction added successfully" });
     setOpen(false);
   };

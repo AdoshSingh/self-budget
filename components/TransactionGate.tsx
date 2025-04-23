@@ -1,6 +1,7 @@
 import { useTransactionStore } from "@/store/transactionStore";
 import { TransactionSkeleton } from "./TransactionSkeleton";
 import Transactions from "./Transactions";
+import { useEffect } from "react";
 
 const TransactionGate = () => {
 

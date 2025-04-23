@@ -7,7 +7,6 @@ export default async function SignInPage() {
   const session = await getServerSession(authOptions);
 
   if (session) {
-    console.log("Session found, redirecting to home page");
     redirect("/");
   }
 

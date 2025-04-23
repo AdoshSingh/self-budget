@@ -44,7 +44,7 @@ export const useTransactionStore = create<TransactionStore>((set) => ({
       if (!state.transactions) {
         return { transactions: [transaction] };
       } else {
-        return { transactions: [...state.transactions, transaction] };
+        return { transactions: [transaction, ...state.transactions] };
       }
     });
   },

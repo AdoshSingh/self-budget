@@ -21,9 +21,9 @@ class TransactionRepository {
     return TransactionRepository.instance;
   }
 
-  public async getTransactions(accountId: string): Promise<RepoResult> {
+  public async getTransactions(accountId: string, userId: string): Promise<RepoResult> {
     try {
-      const existingAccount = (await accountRepository.getAccount(accountId)).data;
+      const existingAccount = (await accountRepository.getAccount(userId)).data;
       if (!existingAccount) {
         return {status: 404, message: 'Account not found'};
       }
