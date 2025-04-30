@@ -57,6 +57,7 @@ class AccountRepository {
           want: (primary_balance * 30) / 100,
           investment: (primary_balance * 20) / 100,
           secondary_balance: secondary_balance,
+          total_balance: primary_balance + secondary_balance,
           userId: userId,
         },
       });
@@ -120,6 +121,7 @@ class AccountRepository {
               need: account.need + newNeed,
               want: account.want + newWant,
               investment: account.investment + newInvest,
+              total_balance: account.total_balance + amount,
             },
           });
   
@@ -141,6 +143,7 @@ class AccountRepository {
             where: { id: account.id },
             data: {
               secondary_balance: account.secondary_balance + amount,
+              total_balance: account.total_balance + amount,
             },
           });
   
@@ -188,6 +191,7 @@ class AccountRepository {
             data: {
               primary_balance: account.primary_balance + amount,
               [updatedField]: account[updatedField] + amount,
+              total_balance: account.total_balance + amount,
             },
           });
   
@@ -250,6 +254,7 @@ class AccountRepository {
         data: {
           primary_balance: account.primary_balance - amount,
           [bracketKey]: existingBalance - amount,
+          total_balance: account.total_balance - amount,
         },
       });
   

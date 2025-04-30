@@ -23,8 +23,9 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { transactionApiService } from "@/clients/api/transactionService";
 import { useToast } from "@/components/ui/use-toast";
+import * as React from "react";
 
-export function AddTransaction() {
+export const AddTransaction = React.memo(() => {
   const [open, setOpen] = useState(false);
 
   const { account } = useAccountStore((state) => ({
@@ -139,6 +140,7 @@ export function AddTransaction() {
                 need: state.account.need + ((transaction.amount * 50) / 100),
                 want: state.account.want + ((transaction.amount * 30) / 100),
                 investment: state.account.investment + ((transaction.amount * 20) / 100),
+                total_balance: state.account.total_balance + transaction.amount,
               },
             };
           });
@@ -150,6 +152,7 @@ export function AddTransaction() {
               account: {
                 ...state.account,
                 secondary_balance: state.account.secondary_balance + transaction.amount,
+                total_balance: state.account.total_balance + transaction.amount,
               },
             };
           });
@@ -173,6 +176,7 @@ export function AddTransaction() {
                 ...state.account,
                 primary_balance: state.account.primary_balance + transaction.amount,
                 [updatedField]: state.account[updatedField] + transaction.amount,
+                total_balance: state.account.total_balance + transaction.amount,
               },
             };
           });
@@ -199,6 +203,7 @@ export function AddTransaction() {
               ...state.account,
               primary_balance: state.account.primary_balance - transaction.amount,
               [bracketKey]: state.account[bracketKey] - transaction.amount,
+              total_balance: state.account.total_balance - transaction.amount,
             },
           };
         });
@@ -242,9 +247,6 @@ export function AddTransaction() {
             SECONDARY: "secondary_balance",
             FUND: "fund"
           };
-          const payerKey = payerFeild[transaction.payer];
-
-          //need to handle the fund as well but later
 
           const payee = transaction.payee;
           const newPayerFeild = Object.fromEntries(
@@ -311,7 +313,7 @@ export function AddTransaction() {
           </TabsList>
           <TabsContent value="transaction">
             <Card className="p-4 bg-slate-100">
-              <ProfileForm formSubmit={addTransaction} />
+              <TransactionForm formSubmit={addTransaction} />
             </Card>
           </TabsContent>
           <TabsContent value="transfer">
@@ -323,16 +325,16 @@ export function AddTransaction() {
       </DialogContent>
     </Dialog>
   );
-}
+});
 
-interface ProfileFormProps extends React.ComponentProps<"form"> {
+interface TransactionFormProps extends React.ComponentProps<"form"> {
   formSubmit: (
     e: React.FormEvent<HTMLFormElement>,
     args: Omit<TransactionRequest, "accountId">
   ) => void;
 }
 
-function ProfileForm({ className, formSubmit }: ProfileFormProps) {
+function TransactionForm({ className, formSubmit }: TransactionFormProps) {
   const [type, setType] = useState<TransactionRequest["type"]>("");
   const [date, setDate] = useState<TransactionRequest["date"]>();
   const [payee, setPayee] = useState<TransactionRequest["payee"]>("");

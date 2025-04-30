@@ -6,15 +6,12 @@ import NoAccountPlaceholder from "./NoAccountPlaceholder";
 import { AccountSkeleton } from "./AccountSkeleton";
 
 const AccountGate = () => {
-    const { accountExists, loading } = useAccountStore((state) => ({
-        accountExists: state.accountExists,
-        loading: state.loading
+    const { accountExists } = useAccountStore((state) => ({
+        accountExists: state.accountExists
     }));
 
-    if(loading) return <AccountSkeleton />
-
-    if(!accountExists) return <NoAccountPlaceholder />
-
+    if(accountExists === null) return <AccountSkeleton />
+    if(accountExists === false) return <NoAccountPlaceholder />
     return <AccountInfo />
 }
 

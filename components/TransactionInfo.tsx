@@ -1,49 +1,32 @@
 "use client";
 
-import type { BracketType, Transaction, TransactionType } from "@/domain/prismaTypes";
-import * as React from "react";
+import type { Transaction ,BracketType, TransactionType} from "@/domain/prismaTypes";
+import { DataTable } from "./DataTable";
+import { useTransactionStore } from "@/store/transactionStore";
 import {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { convertToCurrency } from "@/utils/formatNumber";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { AddTransaction } from "./AddTransaction";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { convertToCurrency } from "@/utils/formatNumber";
-import { AddTransaction } from "./AddTransaction";
+import { ChevronDown } from "lucide-react";
 
-export function DataTableDemo({
-  transactions,
-}: {
-  transactions: Transaction[];
-}) {
+const TransactionInfo = () => {
+
+  const transactions = useTransactionStore((state) => state.transactions); 
+  
   const _columns: ColumnDef<Transaction>[] = [
     {
       accessorKey: "date",
@@ -105,35 +88,17 @@ export function DataTableDemo({
     },
   ];
 
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-
   const table = useReactTable({
-    data: transactions,
+    data: transactions || [],
     columns: _columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
+    getSortedRowModel: getSortedRowModel()
   });
 
   return (
-    <div className="w-full">
+    <div className="w-full p-6">
       <div className="flex items-center py-4 gap-4">
         <Input
           placeholder="Filter Payee..."
@@ -171,60 +136,10 @@ export function DataTableDemo({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={_columns.length}
-                  className="h-24 text-center"
-                >
-                  No transactions.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable table={table}/>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          Showing {table.getRowModel().rows?.length} of {transactions?.length} transaction(s).
         </div>
         <div className="space-x-2">
           <Button
@@ -247,4 +162,6 @@ export function DataTableDemo({
       </div>
     </div>
   );
-}
+};
+
+export default TransactionInfo;

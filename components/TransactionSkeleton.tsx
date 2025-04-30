@@ -7,7 +7,7 @@ export const TransactionSkeleton = () => {
         <Skeleton className="w-[10rem] h-[2rem] rounded-lg bg-slate-200" />
         <Skeleton className="w-[6rem] h-[2rem] rounded-lg bg-slate-200" />
       </div>
-      <Skeleton className="w-full h-[12rem] rounded-lg bg-slate-200" />
+      <Skeleton className="w-full h-[30rem] rounded-lg bg-slate-200" />
     </div>
   );
 };

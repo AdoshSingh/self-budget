@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import Transactions from "./Transactions";
 import { TransactionSkeleton } from "./TransactionSkeleton";
-import { useToast } from "./ui/use-toast";
 import { useAccountStore } from "@/store/accountStore";
 import { useTransactionStore } from "@/store/transactionStore";
 import TransactionGate from "./TransactionGate";
@@ -22,7 +20,8 @@ const TransactionContainer = () => {
     }
   }, [accountExists]);
 
-  if(!accountExists) return null; 
+  if(accountExists === null) return <TransactionSkeleton/>;
+  if(accountExists === false) return null; 
 
   return <TransactionGate />
 };

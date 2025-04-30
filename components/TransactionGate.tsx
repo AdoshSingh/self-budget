@@ -1,20 +1,16 @@
 import { useTransactionStore } from "@/store/transactionStore";
 import { TransactionSkeleton } from "./TransactionSkeleton";
-import Transactions from "./Transactions";
-import { useEffect } from "react";
+import TransactionInfo from "./TransactionInfo";
 
 const TransactionGate = () => {
 
-    const { transactions, loading } = useTransactionStore((state) => ({
-        transactions: state.transactions,
+    const { loading } = useTransactionStore((state) => ({
         loading: state.loading
     }));
 
-    if (loading) {
-        return <TransactionSkeleton />;
-    } else {
-        return <Transactions transactions={transactions || []} />;
-    }
+    if (loading) return <TransactionSkeleton />;
+
+    return <TransactionInfo/>;
 }
 
 export default TransactionGate

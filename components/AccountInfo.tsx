@@ -17,7 +17,7 @@ const AccountInfo = () => {
         <div className="flex justify-between font-bold">
           <span>Total Bank Balance:</span>{" "}
           <span className="flex items-center">
-            {convertToCurrency(0)}
+            {convertToCurrency(account?.total_balance)}
           </span>
         </div>
         <div className="flex justify-between">
