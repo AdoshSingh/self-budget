@@ -490,7 +490,8 @@ class AccountRepository {
             }
             return {
               status: 201,
-              message: 'Transfer successful'
+              message: 'Transfer successful',
+              data: updatedFund
             }
           } else {
             const payee = transaction.payee;
@@ -514,7 +515,8 @@ class AccountRepository {
             }
   
             if(newPayerKey === "secondary_balance") {
-              const result = this.dbClient.account.update({
+              console.log("reacing here");
+              const result = await this.dbClient.account.update({
                 where: {id: account.id},
                 data: {
                   primary_balance: account.primary_balance + amount,
@@ -522,6 +524,7 @@ class AccountRepository {
                   [newPayerKey]: account[newPayerKey] - amount
                 }
               });
+              console.log("res ->" ,result);
               if(!result) {
                 return {
                   status: 400,
@@ -535,7 +538,7 @@ class AccountRepository {
                 data: result
               }
             } else {
-              const result = this.dbClient.account.update({
+              const result = await this.dbClient.account.update({
                 where: {id: account.id},
                 data: {
                   [payeeKey]: account[payeeKey] + amount,
@@ -555,6 +558,74 @@ class AccountRepository {
                 data: result
               }
             }
+          }
+        }
+
+        case "FUND_DEBIT": {
+          if (!transaction.payee || !transaction.payer) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+
+          if(!fundId) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+
+          const payeeField: Record<string, keyof Pick<typeof account, "need" | "want">> = {
+            NEED: "need",
+            WANT: "want",
+          };
+          const payeeKey = payeeField[transaction.payee];
+          if (!payeeKey) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+
+          const existingFund = (await fundRepository.getFund(fundId, account.id)).data;
+          if (!existingFund) {
+            return {
+              status: 404,
+              message: "Fund not found.",
+            };
+          }
+          if(existingFund.accountId !== account.id) {
+            return {
+              status: 403,
+              message: "Invalid request. Please try again.",
+            }
+          }
+
+          const result = await this.dbClient.account.update({
+            where: { id: account.id },
+            data: {
+              primary_balance: account.primary_balance + amount,
+              [payeeKey]: account[payeeKey] + amount
+            },
+          });
+          if(!result) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again."
+            }
+          }
+          const updatedFund = (await fundRepository.removeMoneyFromFunds(fundId, amount)).data;
+          if(!updatedFund) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again."
+            }
+          }
+          return {
+            status: 201,
+            message: "Transfer completed successfully.",
+            data: updatedFund
           }
         }
   

@@ -58,12 +58,9 @@ export const DELETE = async (req: NextRequest) => {
     if (!session) {
       return NextResponse.json(responseWrapper.fail(401, "Unauthorized"));
     }
-    const fundId = req.nextUrl.searchParams.get("fundid");
-    await fundService.removeFund(fundId as string);
-    return NextResponse.json({
-      status: 200,
-      data: "Fund deleted successfully",
-    });
+    const fundId = req.nextUrl.searchParams.get("fundId");
+    const result = await fundService.removeFund(fundId as string);
+    return NextResponse.json(result);
   } catch (error) {
     logger.error(error, "PUT", "/api/fund");
     return NextResponse.json(responseWrapper.error());

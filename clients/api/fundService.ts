@@ -22,7 +22,7 @@ class FundApiService {
   }
 
   public async createFund(args: FundRequest) {
-    return await this.apiService.put<{status: number, message?: string, data: any}>("/api/fund", {
+    return await this.apiService.put<{status: number, message?: string, data: Fund | null | undefined}>("/api/fund", {
       title: args.title,
       target: args.target,
       installment: args.installment,
@@ -32,7 +32,7 @@ class FundApiService {
   }
 
   public async deleteFund(fundId: string) {
-    return await this.apiService.delete<{status: number, message?: string, data: any}>("/api/fund", { fundId });
+    return await this.apiService.delete<{status: number, message?: string, data: Fund | null | undefined}>("/api/fund", { fundId });
   }
 }
 

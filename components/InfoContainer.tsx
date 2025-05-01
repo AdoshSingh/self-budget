@@ -14,8 +14,9 @@ export default function InfoContainer({
   const fetchAccount = useAccountStore((state) => state.fetchAccount);
 
   useEffect(() => {
-    fetchAccount(userSession.user.id);
-  }, []);
+    const account = useAccountStore.getState().account;
+    if(!account) fetchAccount(userSession.user.id);
+  }, []); 
 
   return (
     <div className="flex-1 h-full overflow-auto">

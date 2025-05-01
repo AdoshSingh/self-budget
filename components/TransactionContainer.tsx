@@ -14,7 +14,8 @@ const TransactionContainer = () => {
   useEffect(() => {
     if(accountExists){
       const accountId = useAccountStore.getState().account?.id;
-      if(accountId) {
+      const transactions = useTransactionStore.getState().transactions;
+      if(accountId && transactions === null){ 
         fetchTransactions(accountId);
       }
     }

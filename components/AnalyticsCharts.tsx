@@ -86,8 +86,11 @@ const AnalyticsCharts = ({ transactions }: { transactions: Transaction[] }) => {
     let totalEarned = 0;
     let totalSpent = 0;
 
+    console.log("transactions", transactions);
+
     const initialTransactions = transactions.filter((transaction) => {
-      const transactionYear = transaction.date.getFullYear();
+      const transactionDate = new Date(transaction.date);
+      const transactionYear = transactionDate.getFullYear();
       allYears.add(transactionYear.toString());
       if (currDate.getFullYear() === transactionYear) {
         switch (transaction.type) {
@@ -154,7 +157,8 @@ const AnalyticsCharts = ({ transactions }: { transactions: Transaction[] }) => {
     changedBracketType?: BracketState
   ) => {
     const yearlyTransactions = transactions.filter((transaction) => {
-      const transactionYear = transaction.date.getFullYear();
+      const transactionDate = new Date(transaction.date);
+      const transactionYear = transactionDate.getFullYear();
       return (
         Number(filterYear) === transactionYear &&
         transaction.type === (changedTransactionType ?? transactionType) &&
@@ -201,7 +205,8 @@ const AnalyticsCharts = ({ transactions }: { transactions: Transaction[] }) => {
       const transactionMonth = transaction.date.toLocaleString("en-US", {
         month: "short",
       });
-      const transactionYear = transaction.date.getFullYear();
+      const transactionDate = new Date(transaction.date);
+      const transactionYear = transactionDate.getFullYear();
       return (
         transactionYear === Number(filterYear) &&
         transactionMonth === filterMonth &&
@@ -226,7 +231,8 @@ const AnalyticsCharts = ({ transactions }: { transactions: Transaction[] }) => {
 
     monthlyTransactions.forEach((transaction) => {
       const currAmount = transaction.amount;
-      const currDate = transaction.date.getDate();
+      const transactionDate = new Date(transaction.date);
+      const currDate = transactionDate.getDate();
       if (daysToSpendings[currDate] >= 0) {
         daysToSpendings[currDate] += currAmount;
       }

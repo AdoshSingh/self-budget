@@ -11,17 +11,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useAppStore } from "@/store/store";
 import { FundRequest } from "@/domain/requestTypes";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { fundApiService } from "@/clients/api/fundService";
+import { useAccountStore } from "@/store/accountStore";
+import { useFundStore } from "@/store/fundStore";
 
 export function AddFund() {
   const { toast } = useToast();
-  const { account, setFunds } = useAppStore();
+
+  const account = useAccountStore((state) => state.account);
+  const addFundInStore = useFundStore((state) => state.addFund);
+
   const [open, setOpen] = useState(false);
 
   const addFund = async (
@@ -46,16 +50,16 @@ export function AddFund() {
 
     const response = await fundApiService.createFund({...args, accountId: account.id});
 
-    if(!response || response.status >= 400) {
+    if(!response || response.status >= 400 || !response.data) {
       toast({
         variant: "destructive",
         description: response.message || "Something went wrong",
       });
       return;
     }
-    setFunds(account.id , null, toast);
-    setOpen(false);
+    addFundInStore(response.data);
     toast({ description: "Fund created successfully" });
+    setOpen(false);
   };
 
   return (
@@ -69,21 +73,21 @@ export function AddFund() {
           <DialogDescription>Create a fund mate</DialogDescription>
         </DialogHeader>
         <Card className="p-4 bg-slate-100">
-          <ProfileForm formSubmit={addFund} />
+          <AddFundForm formSubmit={addFund} />
         </Card>
       </DialogContent>
     </Dialog>
   );
 }
 
-interface ProfileFormProps extends React.ComponentProps<"form"> {
+interface AddFundFormProps extends React.ComponentProps<"form"> {
   formSubmit: (
     e: React.FormEvent<HTMLFormElement>,
     args: Omit<FundRequest, "accountId">
   ) => void;
 }
 
-function ProfileForm({ className, formSubmit }: ProfileFormProps) {
+function AddFundForm({ className, formSubmit }: AddFundFormProps) {
   const [title, setTitle] = useState<FundRequest["title"]>("");
   const [target, setTarget] = useState<FundRequest["target"]>(0);
   const [installment, setInstallment] = useState<FundRequest["installment"]>(0);

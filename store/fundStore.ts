@@ -9,6 +9,7 @@ type FundStore = {
   fetchFunds: (accountId: string) => Promise<void>;
   addFund: (fund: Fund) => void;
   removeFund: (fundId: string) => void;
+  updateFund: (updatedFund: Fund) => void;
 };
 
 export const useFundStore = create<FundStore>((set) => ({
@@ -51,4 +52,9 @@ export const useFundStore = create<FundStore>((set) => ({
       funds: state.funds ? state.funds.filter((fund) => fund.id !== fundId) : null,
     }));
   },
+  updateFund: (updatedFund: Fund) => {
+    set((state) => ({
+      funds: state.funds ? state.funds.map((fund) => fund.id === updatedFund.id ? updatedFund : fund) : null
+    }));
+  } 
 }));
