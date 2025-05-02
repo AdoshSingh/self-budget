@@ -2,39 +2,22 @@
 import type { Transaction } from "@/domain/prismaTypes";
 import { useEffect, useState, useRef } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import millify from "millify";
 import { ScrollArea } from "./ui/scroll-area";
 import { convertToCurrency } from "@/utils/formatNumber";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
-import {
-  transactionOptions,
-  months,
-  monthNameToNumber,
-} from "@/constants/constant";
+import { transactionOptions, months, monthNameToNumber } from "@/constants/constant";
 import { Checkbox } from "./ui/checkbox";
 import { CustomDropdown } from "./CustomDropdown";
 import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
 import { BracketType } from "@/domain/prismaTypes";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
-type BracketState = Pick<
-  Record<BracketType, boolean>,
-  "NEED" | "WANT" | "INVEST" | "REFUND" | "INCOME" | "UNREGULATED"
->;
+type BracketState = Pick<Record<BracketType, boolean>, "NEED" | "WANT" | "INVEST" | "REFUND" | "INCOME" | "UNREGULATED">;
 
 export const description = "A bar chart";
 
@@ -48,9 +31,7 @@ const chartConfig = {
 const AnalyticsCharts = ({ transactions }: { transactions: Transaction[] }) => {
   const isFirstRender = useRef(true);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [filteredTransactions, setFilteredTransactions] = useState<
-    Transaction[]
-  >([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [allYears, setAllYears] = useState<string[]>([]);
 
   //filters
@@ -85,8 +66,6 @@ const AnalyticsCharts = ({ transactions }: { transactions: Transaction[] }) => {
     let allYears = new Set<string>();
     let totalEarned = 0;
     let totalSpent = 0;
-
-    console.log("transactions", transactions);
 
     const initialTransactions = transactions.filter((transaction) => {
       const transactionDate = new Date(transaction.date);
@@ -131,7 +110,8 @@ const AnalyticsCharts = ({ transactions }: { transactions: Transaction[] }) => {
 
     initialTransactions.forEach((transaction) => {
       const currAmount = transaction.amount;
-      const currMonth = transaction.date.toLocaleString("en-US", {
+      const transactionDate = new Date(transaction.date);
+      const currMonth = transactionDate.toLocaleString("en-US", {
         month: "short",
       });
       if (monthToSpendings[currMonth] >= 0) {

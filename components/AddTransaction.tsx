@@ -25,8 +25,11 @@ import { transactionApiService } from "@/clients/api/transactionService";
 import { useToast } from "@/components/ui/use-toast";
 import * as React from "react";
 
-export const AddTransaction = React.memo(() => {
+
+
+export const AddTransaction = React.memo(function AddTransaction() {
   const [open, setOpen] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   const { account } = useAccountStore((state) => ({
     account: state.account,
@@ -41,13 +44,16 @@ export const AddTransaction = React.memo(() => {
     args: Omit<TransactionRequest, "accountId">
   ) => {
     e.preventDefault();
-    
+    if(formSubmitted) return;
+    setFormSubmitted(true);
+
     if(!account) {
       toast({
         variant: "destructive",
         title: "Something went wrong",
         description: "Please try again",
       });
+      setFormSubmitted(false);
       return;
     }
 
@@ -64,6 +70,7 @@ export const AddTransaction = React.memo(() => {
         title: "Invalid inputs",
         description: "Please fill all the inputs before adding a transaction",
       });
+      setFormSubmitted(false);
       return;
     }
 
@@ -77,6 +84,7 @@ export const AddTransaction = React.memo(() => {
               description:
                 "Your needs dont have enough amount please make a transfer first.",
             });
+            setFormSubmitted(false);
             return;
           }
           break;
@@ -88,6 +96,7 @@ export const AddTransaction = React.memo(() => {
               description:
                 "Your wants dont have enough amount please make a transfer first.",
             });
+            setFormSubmitted(false);
             return;
           }
           break;
@@ -99,6 +108,7 @@ export const AddTransaction = React.memo(() => {
               description:
                 "Your investment dont have enough amount please make a transfer first.",
             });
+            setFormSubmitted(false);
             return;
           }
           break;
@@ -114,6 +124,7 @@ export const AddTransaction = React.memo(() => {
         variant: "destructive",
         description: response.message || "Something went wrong",
       });
+      setFormSubmitted(false);
       return;
     }
 
@@ -124,6 +135,7 @@ export const AddTransaction = React.memo(() => {
         title: "Something went wrong",
         description: "Please try again",
       });
+      setFormSubmitted(false);
       return;
     }
 
@@ -293,6 +305,7 @@ export const AddTransaction = React.memo(() => {
     }
     addTransactionInState(transaction);
     toast({ description: "Transaction added successfully" });
+    setFormSubmitted(false);
     setOpen(false);
   };
 
@@ -313,12 +326,12 @@ export const AddTransaction = React.memo(() => {
           </TabsList>
           <TabsContent value="transaction">
             <Card className="p-4 bg-slate-100">
-              <TransactionForm formSubmit={addTransaction} />
+              <TransactionForm formSubmit={addTransaction} formDisabled={formSubmitted}/>
             </Card>
           </TabsContent>
           <TabsContent value="transfer">
             <Card className="p-4">
-              <TransferForm formSubmit={addTransaction} balance={account?.primary_balance}/>
+              <TransferForm formSubmit={addTransaction} balance={account?.primary_balance} formDisabled={formSubmitted}/>
             </Card>
           </TabsContent>
         </Tabs>
@@ -332,45 +345,54 @@ interface TransactionFormProps extends React.ComponentProps<"form"> {
     e: React.FormEvent<HTMLFormElement>,
     args: Omit<TransactionRequest, "accountId">
   ) => void;
+  formDisabled: boolean;
 }
 
-function TransactionForm({ className, formSubmit }: TransactionFormProps) {
+function TransactionForm({ className, formSubmit, formDisabled }: TransactionFormProps) {
   const [type, setType] = useState<TransactionRequest["type"]>("");
   const [date, setDate] = useState<TransactionRequest["date"]>();
   const [payee, setPayee] = useState<TransactionRequest["payee"]>("");
   const [payer, setPayer] = useState<TransactionRequest["payer"]>("");
   const [bracket, setBracket] = useState<TransactionRequest["bracket"]>("");
   const [amount, setAmount] = useState<TransactionRequest["amount"]>(0);
+  const [refundPayee, setRefundPayee] = useState<boolean>(false);
 
   useEffect(() => {
     switch (bracket) {
       case "INCOME":
         setPayee("Primary");
         setPayer("");
+        setRefundPayee(false);
         break;
       case "UNREGULATED":
         setPayee("Secondary");
         setPayer("");
+        setRefundPayee(false);
         break;
       case "REFUND":
         setPayee("");
         setPayer("");
+        setRefundPayee(true);
         break;
       case "NEED":
         setPayer("Need");
         setPayee("");
+        setRefundPayee(false);
         break;
       case "WANT":
         setPayer("Want");
         setPayee("");
+        setRefundPayee(false);
         break;
       case "INVEST":
         setPayer("Investments");
         setPayee("");
+        setRefundPayee(false);
         break;
       case "":
         setPayee("");
         setPayer("");
+        setRefundPayee(false);
         break;
     }
   }, [bracket]);
@@ -378,6 +400,7 @@ function TransactionForm({ className, formSubmit }: TransactionFormProps) {
   useEffect(() => {
     if (bracket !== "") {
       setBracket("");
+      setRefundPayee(false);
     }
   }, [type]);
 
@@ -387,8 +410,8 @@ function TransactionForm({ className, formSubmit }: TransactionFormProps) {
         formSubmit(e, {
           type,
           date: date ? date : new Date(),
-          payee,
-          payer,
+          payee: payee.trim(),
+          payer: payer.trim(),
           bracket,
           amount,
         });
@@ -440,13 +463,26 @@ function TransactionForm({ className, formSubmit }: TransactionFormProps) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="payee">Payee</Label>
-            <Input
-              id="payee"
-              value={payee}
-              disabled={bracket === "INCOME" || bracket === "UNREGULATED"}
-              placeholder="Enter payee name"
-              onChange={(e) => setPayee(e.target.value)}
-            />
+            {refundPayee ? 
+              (
+                <CustomDropdown
+                  title="Select payee"
+                  options={transactionOptions.DEBIT}
+                  selection={payee}
+                  setSelection={setPayee}
+                />
+              ) 
+              :
+              (
+                <Input
+                  id="payee"
+                  value={payee}
+                  disabled={bracket === "INCOME" || bracket === "UNREGULATED"}
+                  placeholder="Enter payee name"
+                  onChange={(e) => setPayee(e.target.value)}
+                /> 
+              )
+            }
           </div>
           <div className="grid gap-2">
             <Label htmlFor="payer">Payer</Label>
@@ -462,7 +498,7 @@ function TransactionForm({ className, formSubmit }: TransactionFormProps) {
           </div>
         </div>
       </div>
-      <Button type="submit">Add</Button>
+      <Button type="submit" disabled={formDisabled}>Add</Button>
     </form>
   );
 }
@@ -473,20 +509,28 @@ interface TransferFormProps extends React.ComponentProps<"form"> {
     args: Omit<TransactionRequest, "accountId">,
   ) => void;
   balance?: number;
+  formDisabled?: boolean;
 }
 
-function TransferForm({ className, formSubmit, balance }: TransferFormProps) {
+function TransferForm({ className, formSubmit, balance, formDisabled }: TransferFormProps) {
   const [date, setDate] = useState<TransactionRequest["date"]>();
   const [payee, setPayee] = useState<TransactionRequest["payee"]>("");
   const [payer, setPayer] = useState<TransactionRequest["payer"]>("");
   const [bracket, setBracket] = useState<TransactionRequest["bracket"]>("");
   const [amount, setAmount] = useState<TransactionRequest["amount"]>(0);
+  const [internalTransfer, setInternalTransfer] = useState<boolean>(false);
 
   useEffect(() => {
     if(bracket === "SURPLUS" && balance) {
       setAmount(balance);
       setPayee("Secondary");
       setPayer("Primary");
+      setInternalTransfer(false);
+    } else if (bracket === "INTERNAL") {
+      setAmount(0);
+      setPayee("");
+      setPayer("");
+      setInternalTransfer(true);
     }
   }, [bracket]);
 
@@ -496,8 +540,8 @@ function TransferForm({ className, formSubmit, balance }: TransferFormProps) {
         formSubmit(e, {
           type: "TRANSFER",
           date: date ? date : new Date(),
-          payee,
-          payer,
+          payee: payee.trim(),
+          payer: payer.trim(),
           bracket,
           amount,
         });
@@ -548,27 +592,47 @@ function TransferForm({ className, formSubmit, balance }: TransferFormProps) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="payee">Payee</Label>
-            <Input
-              id="payee"
-              value={payee}
-              disabled={bracket === "SURPLUS"}
-              placeholder="Enter payee name"
-              onChange={(e) => setPayee(e.target.value)}
-            />
+            {internalTransfer ?
+              <CustomDropdown
+                title="Select payee"
+                options={transactionOptions["DEBIT"]}
+                selection={payee}
+                setSelection={setPayee}
+                disabled={payer}
+              />
+              :
+              <Input
+                id="payee"
+                value={payee}
+                disabled={bracket === "SURPLUS"}
+                placeholder="Enter payee name"
+                onChange={(e) => setPayee(e.target.value)}
+              />
+            }
           </div>
           <div className="grid gap-2">
             <Label htmlFor="payer">Payer</Label>
-            <Input
-              id="payer"
-              value={payer}
-              disabled={bracket === "SURPLUS"}
-              placeholder="Enter payer name"
-              onChange={(e) => setPayer(e.target.value)}
-            />
+            {internalTransfer ?
+              <CustomDropdown
+                title="Select payer"
+                options={[...transactionOptions["DEBIT"], "SECONDARY"]}
+                selection={payer}
+                setSelection={setPayer}
+                disabled={payee}
+              />
+              :
+              <Input
+                id="payer"
+                value={payer}
+                disabled={bracket === "SURPLUS"}
+                placeholder="Enter payer name"
+                onChange={(e) => setPayer(e.target.value)}
+              />
+            }
           </div>
         </div>
       </div>
-      <Button type="submit">Add</Button>
+      <Button type="submit" disabled={formDisabled}>Add</Button>
     </form>
   );
 }

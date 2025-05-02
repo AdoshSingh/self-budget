@@ -14,11 +14,13 @@ export function CustomDropdown<T>({
   options,
   selection,
   setSelection,
+  disabled,
 }: {
   title: string;
   options: string[];
   selection: T;
   setSelection: React.Dispatch<React.SetStateAction<T>>;
+  disabled?: string;
 }) {
   return (
     <Select onValueChange={(val) => setSelection(val as T)}>
@@ -30,7 +32,7 @@ export function CustomDropdown<T>({
       <SelectContent>
         <SelectGroup>
           {options.map((ele, ind) => (
-            <SelectItem key={ind} value={ele}>
+            <SelectItem key={ind} value={ele} disabled={ele === disabled}>
               {ele.charAt(0).toLocaleUpperCase() +
                 ele.slice(1).toLocaleLowerCase()}
             </SelectItem>
