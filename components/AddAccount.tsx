@@ -26,19 +26,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IndianRupee } from "lucide-react";
 import { DialogBox } from "./DialogBox";
-import { accountApiService } from "@/services/apiService";
-import { useAppStore } from "@/store/store";
+import { accountApiService } from "@/clients/api/accountService";
+import { useToast } from "./ui/use-toast";
+import { useSession } from "next-auth/react";
+import { useAccountStore } from "@/store/accountStore";
 
-export function AddAccount({ userId }: { userId: string }) {
+export function AddAccount() {
   const [open, setOpen] = useState(false);
-  const {setAccount} = useAppStore();
+  const userId = useSession().data?.user;
+  const accountStore = useAccountStore();
+  const { toast } = useToast();
   
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const formSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newAccount = await accountApiService.addAccount(userId);
-    setAccount(userId);
+    const response = await accountApiService.addAccount(userId);
+    if(!response || response.status >= 400 || !response.data) {
+      toast({
+        description: response.message || "Something went wrong!!",
+        variant: "destructive",
+      });
+      return;
+    } else {
+      toast({
+        description: response.message || "Account added successfully",
+        variant: "default",
+      });
+    }
+    
+    useAccountStore.setState({
+      account: response.data,
+      accountExists: true,
+      loading: false,
+    });
+    
     setOpen(false);
   };
 

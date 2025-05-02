@@ -1,14 +1,18 @@
 import prisma from "../prismaClient";
 import type { Account, Transaction } from "@/domain/prismaTypes";
-import { ReturnUpdatedAccount } from "@/domain/returnTypes";
 import { fundRepository } from "./fundRepository";
+import userRepository from "./userRepository";
+import Logger from "@/utils/logger";
+import type { RepoResult } from "@/domain/returnTypes";
 
 class AccountRepository {
   private static instance: AccountRepository;
   private dbClient: typeof prisma;
+  private logger: Logger;
 
   private constructor(dbClient: typeof prisma) {
     this.dbClient = dbClient;
+    this.logger = new Logger();
   }
 
   public static getInstance(dbClient: typeof prisma) {
@@ -21,271 +25,253 @@ class AccountRepository {
   public async createAccount(
     primary_balance: number = 0,
     secondary_balance: number = 0,
-    uesrId: string
-  ) {
-    const newAccount = await this.dbClient.account.create({
-      data: {
-        primary_balance: primary_balance,
-        need: (primary_balance * 50) / 100,
-        want: (primary_balance * 30) / 100,
-        investment: (primary_balance * 20) / 100,
-        secondary_balance: secondary_balance,
-        userId: uesrId,
-      },
-    });
+    userId: string
+  ): Promise<RepoResult> {
+    try {
+      const userExists = (await userRepository.findUser(userId)).data;
+      if (!userExists) {
+        return { status: 400, message: "User does not exist" };
+      }
 
-    return newAccount;
+      const accountExists = await this.dbClient.account.findUnique({
+        where: { userId: userId },
+      });
+      if (accountExists) {
+        return {
+          status: 409,
+          message: "Account already exists for this user.",
+        };
+      }
+
+      if (isNaN(primary_balance) || primary_balance < 0) {
+        return { status: 400, message: "Invalid primary balance." };
+      }
+      if (isNaN(secondary_balance) || secondary_balance < 0) {
+        return { status: 400, message: "Invalid secondary balance." };
+      }
+
+      const newAccount = await this.dbClient.account.create({
+        data: {
+          primary_balance: primary_balance,
+          need: (primary_balance * 50) / 100,
+          want: (primary_balance * 30) / 100,
+          investment: (primary_balance * 20) / 100,
+          secondary_balance: secondary_balance,
+          total_balance: primary_balance + secondary_balance,
+          userId: userId,
+        },
+      });
+      return {
+        status: 201,
+        message: "Account added successfully",
+        data: newAccount,
+      };
+    } catch (error) {
+      this.logger.error(error, "createAccount", "AccountRepository");
+      return { status: 500 };
+    }
   }
 
-  public async getAccount(userId: string) {
-    const existingAccount = await prisma.account.findUnique({
-      where: {
-        userId: userId,
-      },
-    });
+  public async getAccount(userId: string): Promise<RepoResult> {
+    try {
+      const userExists = (await userRepository.findUser(userId)).data;
+      if (!userExists) {
+        return { status: 400, message: "User does not exist" };
+      }
 
-    return existingAccount;
+      const existingAccount = await this.dbClient.account.findUnique({
+        where: {
+          userId: userId,
+        },
+      });
+      if (!existingAccount) {
+        return { status: 404, message: "Account does not exist." };
+      }
+      return { status: 200, data: existingAccount };
+    } catch (error) {
+      this.logger.error(error, "getAccount", "AccountRepository");
+      return { status: 500 };
+    }
   }
 
   private async creditAccount(
     transaction: Partial<Transaction>,
     account: Account,
-    fundId?: string
-  ): Promise<ReturnUpdatedAccount> {
-    const newPrice = transaction.amount;
-    if (!newPrice) return { remaining: 0, updated: null };
-    const newNeed = (newPrice * 50) / 100;
-    const newWant = (newPrice * 30) / 100;
-    const newInvest = (newPrice * 20) / 100;
-
-    switch (transaction.bracket) {
-      case "INCOME":
-        const updated = await this.dbClient.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            primary_balance: account.primary_balance + newPrice,
-            need: account.need + newNeed,
-            want: account.want + newWant,
-            investment: account.investment + newInvest,
-          },
-        });
+  ): Promise<RepoResult> {
+    try {
+      const amount = transaction.amount;
+      if (!amount) {
         return {
-          remaining: 0,
-          updated: updated,
+          status: 400,
+          message: "Please enter a valid amount.",
         };
-
-      case "UNREGULATED":
-        const updated2 = await this.dbClient.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            secondary_balance: account.secondary_balance + newPrice,
-          },
-        });
-        return {
-          remaining: 0,
-          updated: updated2,
-        };
-
-      case "REFUND":
-        switch (transaction.payee) {
-          case "NEED":
-            const updated3 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                primary_balance: account.primary_balance + newPrice,
-                need: account.need + newPrice,
-              },
-            });
+      }
+  
+      switch (transaction.bracket) {
+        case "INCOME": {
+          const newNeed = (amount * 50) / 100;
+          const newWant = (amount * 30) / 100;
+          const newInvest = (amount * 20) / 100;
+          const result = await this.dbClient.account.update({
+            where: {
+              id: account.id,
+            },
+            data: {
+              primary_balance: account.primary_balance + amount,
+              need: account.need + newNeed,
+              want: account.want + newWant,
+              investment: account.investment + newInvest,
+              total_balance: account.total_balance + amount,
+            },
+          });
+  
+          if (result) {
             return {
-              remaining: 0,
-              updated: updated3,
+              status: 201,
+              message: "Account updated successfully",
+              data: result,
             };
-
-          case "WANT":
-            const updated4 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                primary_balance: account.primary_balance + newPrice,
-                want: account.want + newPrice,
-              },
-            });
-            return {
-              remaining: 0,
-              updated: updated4,
-            };
-
-          case "INVEST":
-            const updated5 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                primary_balance: account.primary_balance + newPrice,
-                investment: account.investment + newPrice,
-              },
-            });
-            return {
-              remaining: 0,
-              updated: updated5,
-            };
-
-          case "SECONDARY":
-            const updated6 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                secondary_balance: account.secondary_balance + newPrice,
-              },
-            });
-            return {
-              remaining: 0,
-              updated: updated6,
-            };
-
-          case "FUNDS":
-            if (!fundId)
-              return {
-                remaining: 0,
-                updated: null,
-              };
-            const updated7 = await fundRepository.addMoneyInFunds(
-              fundId,
-              newPrice
-            );
-            return {
-              remaining: 0,
-              updated: account,
-            };
+          }
+          return {
+            status: 400,
+            message: "Failed to update account. Please try again.",
+          };
         }
-
-      default:
-        return {
-          remaining: 0,
-          updated: null,
-        };
+  
+        case "UNREGULATED": {
+          const result = await this.dbClient.account.update({
+            where: { id: account.id },
+            data: {
+              secondary_balance: account.secondary_balance + amount,
+              total_balance: account.total_balance + amount,
+            },
+          });
+  
+          if (result) {
+            return {
+              status: 201,
+              message: "Account updated successfully",
+              data: result,
+            };
+          }
+          return {
+            status: 400,
+            message: "Failed to update account. Please try again.",
+          };
+        }
+  
+        case "REFUND": {
+          if (!transaction.payee) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+  
+          const payeeToField: Record<
+            string,
+            keyof Pick<typeof account, "need" | "want" | "investment">
+          > = {
+            NEED: "need",
+            WANT: "want",
+            INVEST: "investment",
+          };
+  
+          const updatedField = payeeToField[transaction.payee];
+  
+          if (!updatedField) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+  
+          const result = await this.dbClient.account.update({
+            where: { id: account.id },
+            data: {
+              primary_balance: account.primary_balance + amount,
+              [updatedField]: account[updatedField] + amount,
+              total_balance: account.total_balance + amount,
+            },
+          });
+  
+          if (result) {
+            return {
+              status: 201,
+              message: "Account updated successfully",
+              data: result,
+            };
+          } 
+          return {
+            status: 400,
+            message: "Failed to update account. Please try again.",
+          };
+        }
+  
+        default:{
+          return {
+            status: 400,
+            message: "Failed to update account. Please try again.",
+          };
+        }
+      }
+    } catch (error) {
+      this.logger.error(error, "creditAccount", "AccountRepository");
+      return { status: 500 };
     }
   }
 
   private async debitAccount(
     transaction: Partial<Transaction>,
     account: Account,
-    fundId?: string
-  ): Promise<ReturnUpdatedAccount> {
-    const amount = transaction.amount;
-    if (!amount)
-      return {
-        remaining: 0,
-        updated: null,
+  ): Promise<RepoResult> {
+    try {
+      const amount = transaction.amount;
+      if (!amount) return { status: 400, message: "Please enter a valid amount."};
+  
+      if (!transaction.bracket) return { status: 400, message: "Invalid request. Please try again."};
+  
+      const brackets: Record<
+        string, 
+        keyof Pick<typeof account, "need" | "want" | "investment">
+      > = {
+        NEED: "need",
+        WANT: "want",
+        INVEST: "investment",
       };
-    let existingNeed = account.need;
-    let existingWant = account.want;
-    let existingInvest = account.investment;
-
-    switch (transaction.bracket) {
-      case "NEED":
-        if (amount > existingNeed) {
-          return { remaining: amount - existingNeed, updated: null };
-        }
-        const updated = await this.dbClient.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            primary_balance: account.primary_balance - amount,
-            need: existingNeed - amount,
-          },
-        });
+  
+      const bracketKey = brackets[transaction.bracket];
+      if (!bracketKey) return { status: 400, message: "Invalid transaction bracket." };
+  
+      const existingBalance = account[bracketKey];
+  
+      if (amount > existingBalance) {
+        return { status: 403, message: `Insufficient balance in '${transaction.bracket}'.` };
+      }
+  
+      const result = await this.dbClient.account.update({
+        where: { id: account.id },
+        data: {
+          primary_balance: account.primary_balance - amount,
+          [bracketKey]: existingBalance - amount,
+          total_balance: account.total_balance - amount,
+        },
+      });
+  
+      if (result) {
         return {
-          remaining: 0,
-          updated: updated,
+          status: 201,
+          message: "Account updated successfully",
+          data: result,
         };
-
-      case "WANT":
-        if (amount > existingWant) {
-          return { remaining: amount - existingWant, updated: null };
-        }
-        const updated2 = await this.dbClient.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            primary_balance: account.primary_balance - amount,
-            want: existingWant - amount,
-          },
-        });
-        return {
-          remaining: 0,
-          updated: updated2,
-        };
-
-      case "INVEST":
-        const updated3 = await this.dbClient.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            primary_balance: account.primary_balance - amount,
-            investment: existingInvest - amount,
-          },
-        });
-        return {
-          remaining: 0,
-          updated: updated3,
-        };
-
-      case "FUND_DEBIT":
-        if (!fundId)
-          return {
-            remaining: 0,
-            updated: null,
-          };
-
-        const udpatedFund = await fundRepository.removeMoneyFromFunds(
-          fundId,
-          amount
-        );
-
-        if(transaction.payee === 'NEED') {
-          await this.dbClient.account.update({
-            where: {
-              id: account.id
-            },
-            data: {
-              primary_balance: account.primary_balance + amount,
-              need: account.need + amount
-            }
-          });
-        } else if(transaction.payee === 'WANT') {
-          await this.dbClient.account.update({
-            where: {
-              id: account.id,
-            },
-            data: {
-              primary_balance: account.primary_balance + amount,
-              want: account.want + amount,
-            }
-          });
-        }
-
-        return {
-          remaining: 0,
-          updated: account,
-        };
-
-      default:
-        return {
-          remaining: 0,
-          updated: null,
-        };
+      }
+      return {
+        status: 400,
+        message: "Failed to update account. Please try again.",
+      };
+    } catch (error) {
+      this.logger.error(error, "debitAccount", "AccountRepository");
+      return { status: 500 };
     }
   }
 
@@ -293,328 +279,431 @@ class AccountRepository {
     transaction: Partial<Transaction>,
     account: Account,
     fundId?: string
-  ): Promise<ReturnUpdatedAccount> {
-    const amount = transaction.amount;
-    if (!amount)
-      return {
-        remaining: 0,
-        updated: null,
-      };
-    let existingNeed = account.need;
-    let existingWant = account.want;
-    let existingSecondary = account.secondary_balance;
-    switch (transaction.bracket) {
-      case "SURPLUS":
-        const updated = await this.dbClient.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            primary_balance: 0,
-            need: 0,
-            want: 0,
-            investment: 0,
-            secondary_balance: existingSecondary + amount,
-          },
-        });
-        return {
-          remaining: 0,
-          updated: updated,
-        };
-
-      case "FUND_TRANSFER":
-        if (!fundId)
+  ): Promise<RepoResult> {
+    try {
+      const amount = transaction.amount;
+      if (!amount) return { status: 400, message: "Please enter a valid amount."};
+  
+      switch (transaction.bracket) {
+        case "SURPLUS": {
+          if(amount !== account.primary_balance) {
+            return {
+              status: 400,
+              message: "Invalid amount. Please try again.",
+            };
+          }
+          
+          let existingSecondary = account.secondary_balance;
+  
+          const result = await this.dbClient.account.update({
+            where: {
+              id: account.id,
+            },
+            data: {
+              primary_balance: 0,
+              need: 0,
+              want: 0,
+              investment: 0,
+              secondary_balance: existingSecondary + amount,
+            },
+          });
+          if (result) {
+            return {
+              status: 201,
+              message: "Account updated successfully",
+              data: result,
+            };
+          }
           return {
-            remaining: 0,
-            updated: null,
+            status: 400,
+            message: "Failed to update account. Please try again.",
           };
-        let updated2;
-        if (transaction.payer === "NEED") {
-          updated2 = await this.dbClient.account.update({
-            where: {
-              id: account.id,
-            },
-            data: {
-              primary_balance: {
-                decrement: amount,
-              },
-              need: {
-                decrement: amount,
-              },
-            },
-          });
-        } else {
-          updated2 = await this.dbClient.account.update({
-            where: {
-              id: account.id,
-            },
-            data: {
-              primary_balance: {
-                decrement: amount,
-              },
-              want: {
-                decrement: amount,
-              },
-            },
-          });
         }
-        const updatedFund = await fundRepository.addMoneyInFunds(
-          fundId,
-          amount
-        );
-        return {
-          remaining: 0,
-          updated: updated2,
-        };
-
-      case "INTERNAL":
-        if (transaction.payee === "NEED") {
-          if (amount <= existingWant) {
-            const updated2 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                need: existingNeed + amount,
-                want: existingWant - amount,
-              },
-            });
+  
+        case "FUND_TRANSFER":{
+          if(!fundId) return { status: 400, message: "Invalid fund ID."};
+          if(!transaction.payer) return { status: 400, message: "Invalid payer."};
+  
+          const existingFund = (await fundRepository.getFund(fundId, account.id)).data;
+          if (!existingFund) {
             return {
-              remaining: 0,
-              updated: updated2,
-            };
-          } else if (amount > existingWant && existingWant > 0) {
-            const updated2 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                need: existingNeed + existingWant,
-                want: existingWant - existingWant,
-              },
-            });
-            return {
-              remaining: amount - existingWant,
-              updated: updated2,
-            };
-          } else if (existingWant === 0 && fundId) {
-            const existingFund = await fundRepository.getFund(fundId);
-            if (!existingFund)
-              return {
-                remaining: 0,
-                updated: null,
-              };
-
-            const existingFundBalance = existingFund.balance;
-            let updatedFund;
-            if (existingFundBalance >= amount) {
-              updatedFund = await fundRepository.removeMoneyFromFunds(
-                fundId,
-                amount
-              );
-              const updatedAcc = await this.dbClient.account.update({
-                where: {
-                  id: account.id,
-                },
-                data: {
-                  primary_balance: {
-                    increment: amount,
-                  },
-                  need: {
-                    increment: amount,
-                  },
-                },
-              });
-              return {
-                remaining: 0,
-                updated: updatedAcc,
-              };
-            } else {
-              updatedFund = await fundRepository.removeMoneyFromFunds(
-                fundId,
-                existingFundBalance
-              );
-              const updatedAcc = await this.dbClient.account.update({
-                where: {
-                  id: account.id,
-                },
-                data: {
-                  primary_balance: {
-                    increment: existingFundBalance,
-                  },
-                  need: {
-                    increment: existingFundBalance,
-                  },
-                },
-              });
-              return {
-                remaining: amount - existingFundBalance,
-                updated: updatedAcc,
-              };
-            }
-          } else {
-            const updated2 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                primary_balance: account.primary_balance + amount,
-                need: existingNeed + amount,
-                secondary_balance: existingSecondary - amount,
-              },
-            });
-            return {
-              remaining: 0,
-              updated: updated2,
+              status: 404,
+              message: "Fund not found.",
             };
           }
-        } else if (transaction.payee === "WANT") {
-          if (fundId) {
-            const existingFund = await fundRepository.getFund(fundId);
-            if (!existingFund)
-              return {
-                remaining: 0,
-                updated: null,
-              };
-
-            const existingFundBalance = existingFund.balance;
-            let updatedFund;
-            if (existingFundBalance >= amount) {
-              updatedFund = await fundRepository.removeMoneyFromFunds(
-                fundId,
-                amount
-              );
-              const updatedAcc = await this.dbClient.account.update({
-                where: {
-                  id: account.id,
-                },
-                data: {
-                  primary_balance: {
-                    increment: amount,
-                  },
-                  want: {
-                    increment: amount,
-                  },
-                },
-              });
-              return {
-                remaining: 0,
-                updated: updatedAcc,
-              };
-            } else {
-              updatedFund = await fundRepository.removeMoneyFromFunds(
-                fundId,
-                existingFundBalance
-              );
-              const updatedAcc = await this.dbClient.account.update({
-                where: {
-                  id: account.id,
-                },
-                data: {
-                  primary_balance: {
-                    increment: existingFundBalance,
-                  },
-                  want: {
-                    increment: existingFundBalance,
-                  },
-                },
-              });
-              return {
-                remaining: amount - existingFundBalance,
-                updated: updatedAcc,
-              };
-            }
-          } else {
-            const updated2 = await this.dbClient.account.update({
-              where: {
-                id: account.id,
-              },
-              data: {
-                primary_balance: account.primary_balance + amount,
-                want: existingWant + amount,
-                secondary_balance: existingSecondary - amount,
-                penalty: account.penalty + amount,
-              },
-            });
+  
+          if(existingFund.accountId !== account.id) {
             return {
-              remaining: 0,
-              updated: updated2,
+              status: 403,
+              message: "Invalid request. Please try again.",
+            }
+          }
+  
+          const payer: Record<string, keyof Pick<typeof account, "need" | "want">> = {
+            NEED: "need",
+            WANT: "want",
+          };
+  
+          const payeeKey = payer[transaction.payer];
+  
+          if (!payeeKey) {
+            return {
+              status: 400,
+              message: "Invalid payer. Please try again.",
             };
           }
-        } else if(transaction.payee === "INVEST") {
-          const updated2 = await this.dbClient.account.update({
+  
+          if(amount > account[payeeKey]) {
+            return {
+              status: 400,
+              message: "Invalid amount. Please try again.",
+            };
+          }
+  
+          const result = await this.dbClient.account.update({
             where: {
               id: account.id,
             },
+            data: {
+              primary_balance: account.primary_balance - amount,
+              [payeeKey]: account[payeeKey] - amount,
+            },
+          });
+          if(!result) {
+            return {
+              status: 400,
+              message: "Failed to update account. Please try again.",
+            };
+          }
+  
+          const updatedFund = (await fundRepository.addMoneyInFunds(fundId, amount)).data;
+          if (updatedFund) {
+            return {
+              status: 201,
+              message: "Balance added to fund successfully",
+              data: updatedFund,
+            };
+          }
+          return {
+            status: 400,
+            message: "Failed to update fund. Please try again.",
+          };
+        }
+  
+        case "INTERNAL":{
+          if (!transaction.payee || !transaction.payer) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+  
+          const payeeField: Record<string, keyof Pick<typeof account, "need" | "want" | "investment">> = {
+            NEED: "need",
+            WANT: "want",
+            INVEST: "investment",
+          };
+  
+          const payeeKey = payeeField[transaction.payee];
+          if (!payeeKey) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+  
+          const payerFeild: Record<
+            string,
+            keyof Pick<
+                typeof account,
+                "need" | "want" | "investment" | "secondary_balance"
+              >
+            | "fund"
+          > = {
+            NEED: "need",
+            WANT: "want",
+            INVEST: "investment",
+            SECONDARY: "secondary_balance",
+            FUND: "fund"
+          };
+  
+          const payerKey = payerFeild[transaction.payer];
+          if(!payerKey) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+  
+          if(fundId) {
+            if(transaction.payer !== "FUND") {
+              return {
+                status: 400,
+                message: "Invalid request. Please try again.",
+              }
+            }
+  
+            const existingFund = (await fundRepository.getFund(fundId, account.id)).data;
+            if (!existingFund) {
+              return {
+                status: 404,
+                message: "Fund not found.",
+              };
+            }
+  
+            if(existingFund.accountId !== account.id) {
+              return {
+                status: 403,
+                message: "Invalid request. Please try again.",
+              }
+            }
+  
+            if(amount > existingFund.balance) {
+              return {
+                status: 403,
+                message: `Insufficient balance in fund.`
+              }
+            }
+  
+            const result = await this.dbClient.account.update({
+              where: {
+                id: account.id
+              },
+              data: {
+                primary_balance: account.primary_balance + amount,
+                [payeeKey]: account[payeeKey] + amount
+              }
+            });
+            if(!result) {
+              return {
+                status: 400,
+                message: 'Invalid request. Please try again.'
+              }
+            }
+  
+            const updatedFund = (await fundRepository.removeMoneyFromFunds(fundId, amount)).data;
+            if(!updatedFund) {
+              return {
+                status: 400,
+                message: 'Invalid request. Please try again.'
+              }
+            }
+            return {
+              status: 201,
+              message: 'Transfer successful',
+              data: updatedFund
+            }
+          } else {
+            const payee = transaction.payee;
+            const newPayerFeild = Object.fromEntries(
+              Object.entries(payerFeild).filter(([ele]) => ele !== payee)
+            );
+  
+            const newPayerKey = newPayerFeild[transaction.payer];
+            if(!newPayerKey || newPayerKey === 'fund') {
+              return {
+                status: 400,
+                message: "Invalid request. Please try again.",
+              };
+            }
+  
+            if(amount > account[newPayerKey]) {
+              return {
+                status: 403,
+                message: "Not enough balance. Please try again."
+              }
+            }
+  
+            if(newPayerKey === "secondary_balance") {
+              console.log("reacing here");
+              const result = await this.dbClient.account.update({
+                where: {id: account.id},
+                data: {
+                  primary_balance: account.primary_balance + amount,
+                  [payeeKey]: account[payeeKey] + amount,
+                  [newPayerKey]: account[newPayerKey] - amount
+                }
+              });
+              console.log("res ->" ,result);
+              if(!result) {
+                return {
+                  status: 400,
+                  message: "Invalid request. Please try again."
+                }
+              }
+  
+              return {
+                status: 201, 
+                message: 'Transfer completed successfully.',
+                data: result
+              }
+            } else {
+              const result = await this.dbClient.account.update({
+                where: {id: account.id},
+                data: {
+                  [payeeKey]: account[payeeKey] + amount,
+                  [newPayerKey]: account[newPayerKey] - amount
+                }
+              });
+              if(!result) {
+                return {
+                  status: 400,
+                  message: "Invalid request. Please try again."
+                }
+              }
+  
+              return {
+                status: 201, 
+                message: 'Transfer completed successfully.',
+                data: result
+              }
+            }
+          }
+        }
+
+        case "FUND_DEBIT": {
+          if (!transaction.payee || !transaction.payer) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+
+          if(!fundId) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+
+          const payeeField: Record<string, keyof Pick<typeof account, "need" | "want">> = {
+            NEED: "need",
+            WANT: "want",
+          };
+          const payeeKey = payeeField[transaction.payee];
+          if (!payeeKey) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again.",
+            };
+          }
+
+          const existingFund = (await fundRepository.getFund(fundId, account.id)).data;
+          if (!existingFund) {
+            return {
+              status: 404,
+              message: "Fund not found.",
+            };
+          }
+          if(existingFund.accountId !== account.id) {
+            return {
+              status: 403,
+              message: "Invalid request. Please try again.",
+            }
+          }
+
+          const result = await this.dbClient.account.update({
+            where: { id: account.id },
             data: {
               primary_balance: account.primary_balance + amount,
-              investment: account.investment + amount,
-              secondary_balance: existingSecondary - amount,
-              penalty: account.penalty + amount,
+              [payeeKey]: account[payeeKey] + amount
             },
           });
+          if(!result) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again."
+            }
+          }
+          const updatedFund = (await fundRepository.removeMoneyFromFunds(fundId, amount)).data;
+          if(!updatedFund) {
+            return {
+              status: 400,
+              message: "Invalid request. Please try again."
+            }
+          }
           return {
-            remaining: 0,
-            updated: updated2,
-          };
+            status: 201,
+            message: "Transfer completed successfully.",
+            data: updatedFund
+          }
         }
-        return {
-          remaining: 0,
-          updated: null,
-        };
-
-      case "PENALTY":
-        const updated3 = await this.dbClient.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            want: existingWant - amount,
-            secondary_balance: existingSecondary + amount,
-          },
-        });
-        return {
-          remaining: 0,
-          updated: updated3,
-        };
-
-      default:
-        return {
-          remaining: 0,
-          updated: null,
-        };
+  
+        default:{
+          return {
+            status: 400,
+            message: "Invalid request. Please try again."
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error(error, "updateAccount", "AccountRepository");
+      return { status: 500 };
     }
   }
 
   public async updateAccount(
     transaction: Partial<Transaction>,
     fundId?: string
-  ): Promise<ReturnUpdatedAccount> {
-    const existingAccount = await this.dbClient.account.findUnique({
-      where: {
-        id: transaction.accountId,
-      },
-    });
-
-    if (!existingAccount)
-      return {
-        remaining: 0,
-        updated: null,
-      };
-
-    switch (transaction.type) {
-      case "CREDIT":
-        return await this.creditAccount(transaction, existingAccount, fundId);
-      case "DEBIT":
-        return await this.debitAccount(transaction, existingAccount, fundId);
-      case "TRANSFER":
-        return await this.transferAccount(transaction, existingAccount, fundId);
-
-      default:
+  ): Promise<RepoResult> {
+    try {
+      const existingAccount = await this.dbClient.account.findUnique({
+        where: {
+          id: transaction.accountId,
+        },
+      });
+      if (!existingAccount) {
         return {
-          remaining: 0,
-          updated: null,
+          status: 404,
+          message: "Account not found for given account ID.",
         };
+      }
+
+      switch (transaction.type) {
+        case "CREDIT": {
+          const result = await this.creditAccount(
+            transaction,
+            existingAccount,
+          );
+          return {
+            status: result.status,
+            message: result.message,
+            data: result.data,
+          };
+        }
+        case "DEBIT": {
+          const result = await this.debitAccount(
+            transaction,
+            existingAccount,
+          );
+          return {
+            status: result.status,
+            message: result.message,
+            data: result.data,
+          };
+        }
+        case "TRANSFER": {
+          const result = await this.transferAccount(
+            transaction,
+            existingAccount,
+            fundId
+          );
+          return {
+            status: result.status,
+            message: result.message,
+            data: result.data,
+          };
+        }
+        default: {
+          return {
+            status: 400,
+            message: "Invalid transaction, please try again.",
+          };
+        }
+      }
+    } catch (error) {
+      this.logger.error(error, "updateAccount", "AccountRepository");
+      return { status: 500 };
     }
   }
 

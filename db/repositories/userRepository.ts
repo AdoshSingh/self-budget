@@ -1,11 +1,15 @@
 import prisma from "../prismaClient";
+import Logger from "@/utils/logger";
+import type { RepoResult } from "@/domain/returnTypes";
 
 class UserRepository {
   public static instance: UserRepository;
   private dbClient: typeof prisma;
+  private logger: Logger;
 
   private constructor(dbClient: typeof prisma) {
     this.dbClient = dbClient;
+    this.logger = new Logger();
   }
 
   public static getInstance(dbClient: typeof prisma) {
@@ -15,13 +19,21 @@ class UserRepository {
     return UserRepository.instance;
   }
 
-  public async findUser(id: string) {
-    const existingUser = await this.dbClient.user.findUnique({
-      where: {
-        id: id
+  public async findUser(id: string): Promise<RepoResult> {
+    try {
+      const existingUser = await this.dbClient.user.findUnique({
+        where: {
+          id: id
+        }
+      });
+      if(!existingUser) {
+        return {status: 404, message: 'User not found'};
       }
-    });
-    if(existingUser) return existingUser;
+      return {status: 200, data: existingUser};
+    } catch (error) {
+      this.logger.error(error, 'findUser', 'UserRepository');
+      return {status: 500}
+    }
   }
 
   public async addUser(
@@ -30,21 +42,29 @@ class UserRepository {
     name: string,
     password?: string,
     photoUrl?: string
-  ) {
+  ): Promise<RepoResult> {
+    try {
+      const result = await this.findUser(id);
+      if(result.data) return {status: 200, message: 'User fetched successfully.', data: result.data};
+      
+      if(!result.data && result.status === 404){
+        const newUser = await this.dbClient.user.create({
+          data: {
+            id,
+            email,
+            name,
+            password: password || '',
+            img: photoUrl || '',
+          }
+        });
     
-    const existingUser = await this.findUser(id);
-    if(existingUser) return existingUser;
-    const newUser = await this.dbClient.user.create({
-      data: {
-        id,
-        email,
-        name,
-        password: password || '',
-        img: photoUrl || '',
-      }
-    });
-
-    return newUser;
+        return {status: 201, message: 'User added successfully.', data: newUser};
+      } 
+      return {status: 500}
+    } catch (error) {
+      this.logger.error(error, 'addUser', 'UserRepository');
+      return {status: 500}
+    }
   }
 }
 

@@ -1,29 +1,30 @@
 "use client";
 
 import { useEffect } from "react";
-import NoTransactionPlaceholder from "./NoTransactionPlaceholder";
-import Transactions from "./Transactions";
-import { useAppStore } from "@/store/store";
 import { TransactionSkeleton } from "./TransactionSkeleton";
+import { useAccountStore } from "@/store/accountStore";
+import { useTransactionStore } from "@/store/transactionStore";
+import TransactionGate from "./TransactionGate";
 
 const TransactionContainer = () => {
-  const { account, transactions, setTransactions } = useAppStore();
+  
+  const fetchTransactions = useTransactionStore((state) => state.fetchTransactions);
+  const accountExists = useAccountStore((state) => state.accountExists);
 
   useEffect(() => {
-    if (account?.id) {
-      setTransactions(account.id);
+    if(accountExists){
+      const accountId = useAccountStore.getState().account?.id;
+      const transactions = useTransactionStore.getState().transactions;
+      if(accountId && transactions === null){ 
+        fetchTransactions(accountId);
+      }
     }
-  }, [account]);
+  }, [accountExists]);
 
-  // if (!transactions || transactions.length === 0) {
-  //   return <NoTransactionPlaceholder />;
-  // } else {
-  if (transactions === undefined) {
-    return <TransactionSkeleton />;
-  } else {
-    return <Transactions transactions={transactions || []} />;
-  }
-  // }
+  if(accountExists === null) return <TransactionSkeleton/>;
+  if(accountExists === false) return null; 
+
+  return <TransactionGate />
 };
 
 export default TransactionContainer;

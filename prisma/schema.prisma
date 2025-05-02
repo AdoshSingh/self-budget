@@ -29,6 +29,7 @@ model Account {
   want              Float
   investment        Float
   secondary_balance Float
+  total_balance     Float         @default(0)
   penalty           Float         @default(0)
   user              User          @relation(fields: [userId], references: [id])
   userId            String        @unique
