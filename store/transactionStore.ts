@@ -44,6 +44,25 @@ export const useTransactionStore = create<TransactionStore>((set) => ({
       if (!state.transactions) {
         return { transactions: [transaction] };
       } else {
+        const latestTransactionDate = new Date(state.transactions[0].date);
+        const newTransactionDate = new Date(transaction.date);
+        if (newTransactionDate.getTime() < latestTransactionDate.getTime()) {
+          let ind = 0;
+          for (let i = 0; i < state.transactions.length; i++) {
+            const currentTransactionDate = new Date(state.transactions[i].date);
+            if (newTransactionDate.getTime() > currentTransactionDate.getTime()) {
+              ind = i;
+              break;
+            }
+          }
+          return {
+            transactions: [
+              ...state.transactions.slice(0, ind),
+              transaction,
+              ...state.transactions.slice(ind),
+            ],
+          };
+        }
         return { transactions: [transaction, ...state.transactions] };
       }
     });
