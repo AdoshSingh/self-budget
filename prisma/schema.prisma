@@ -35,6 +35,7 @@ model Account {
   userId            String        @unique
   Fund              Fund[]
   Transaction       Transaction[]
+  AccountState      AccountState[]
 }
 
 model Fund {
@@ -47,6 +48,7 @@ model Fund {
   paused      Boolean @default(false)
   account     Account @relation(fields: [accountId], references: [id])
   accountId   String
+  isDeleted   Boolean @default(false)
 }
 
 enum TransactionType {
@@ -79,4 +81,18 @@ model Transaction {
   amount    Float
   account   Account         @relation(fields: [accountId], references: [id])
   accountId String          
+}
+
+model AccountState {
+  id        String   @id @default(uuid())
+  date      DateTime
+  account   Account  @relation(fields: [accountId], references: [id])
+  accountId String
+  primary_balance   Float
+  need              Float
+  want              Float
+  investment        Float
+  secondary_balance Float
+  total_balance     Float          @default(0)
+  fundSnapshot      Json
 }
