@@ -22,33 +22,61 @@ model User {
   Account  Account[]
 }
 
+model AccountConfig {
+  id          String  @id @default(uuid())
+  splitNeed   Float   @default(50)
+  splitWant   Float   @default(30)
+  splitInvest Float   @default(20)
+  account     Account @relation(fields: [accountId], references: [id])
+  accountId   String  @unique
+}
+
+model SpendingAccount {
+  id          String        @id @default(uuid())
+  bankName    String
+  type        String
+  account     Account       @relation(fields: [accountId], references: [id])
+  accountId   String
+  balance     Float
+  Transaction Transaction[]
+}
+
 model Account {
-  id                String        @id @default(uuid())
+  id                String            @id @default(uuid())
   primary_balance   Float
   need              Float
   want              Float
   investment        Float
   secondary_balance Float
-  total_balance     Float         @default(0)
-  penalty           Float         @default(0)
-  user              User          @relation(fields: [userId], references: [id])
-  userId            String        @unique
+  total_balance     Float             @default(0)
+  penalty           Float             @default(0)
+  user              User              @relation(fields: [userId], references: [id])
+  userId            String            @unique
   Fund              Fund[]
   Transaction       Transaction[]
   AccountState      AccountState[]
+  SpendingAccount   SpendingAccount[]
+  AccountConfig     AccountConfig?
 }
 
 model Fund {
-  id          String  @id @default(uuid())
+  id          String      @id @default(uuid())
   title       String
   target      Float
   installment Float
   duration    Int
-  balance     Float   @default(0)
-  paused      Boolean @default(false)
-  account     Account @relation(fields: [accountId], references: [id])
+  balance     Float       @default(0)
+  paused      Boolean     @default(false)
+  account     Account     @relation(fields: [accountId], references: [id])
   accountId   String
-  isDeleted   Boolean @default(false)
+  isDeleted   Boolean     @default(false)
+  depositType FundDeposit @default(ACCOUNT)
+  depositName String      @default("ACCOUNT")
+}
+
+enum FundDeposit {
+  ACCOUNT
+  FUND
 }
 
 enum TransactionType {
@@ -72,27 +100,29 @@ enum BracketType {
 }
 
 model Transaction {
-  id        String          @id @default(uuid())
-  type      TransactionType
-  date      DateTime
-  payee     String
-  bracket   BracketType
-  payer     String
-  amount    Float
-  account   Account         @relation(fields: [accountId], references: [id])
-  accountId String          
+  id                String          @id @default(uuid())
+  type              TransactionType
+  date              DateTime
+  payee             String
+  bracket           BracketType
+  payer             String
+  amount            Float
+  account           Account         @relation(fields: [accountId], references: [id])
+  accountId         String
+  spendingAccount   SpendingAccount? @relation(fields: [spendingAccountId], references: [id])
+  spendingAccountId String?
 }
 
 model AccountState {
-  id        String   @id @default(uuid())
-  date      DateTime
-  account   Account  @relation(fields: [accountId], references: [id])
-  accountId String
+  id                String   @id @default(uuid())
+  date              DateTime
+  account           Account  @relation(fields: [accountId], references: [id])
+  accountId         String
   primary_balance   Float
   need              Float
   want              Float
   investment        Float
   secondary_balance Float
-  total_balance     Float          @default(0)
+  total_balance     Float    @default(0)
   fundSnapshot      Json
 }
